@@ -4,19 +4,19 @@ Analisador Léxico para a gramática [LITTLE](https://sites.google.com/site/amit
 ### Compiler 
 Métodos concluídos da classe Compiler
 
-* Program
+##### Program
 - [x] program
 - [x] id
 - [x] pgm_body
 - [x] decl
 
-* Global String Declaration
+##### Global String Declaration
 - [x] string_decl_list
 - [x] string_decl
 - [x] str **TERMINAR**
 - [x] str_decl_tail **DUVIDA**
 
-* Variable Declaration
+##### Variable Declaration
 - [x] var_decl_list **DUVIDA**
 - [x] var_decl **DUVIDA**
 - [x] var_type
@@ -25,30 +25,30 @@ Métodos concluídos da classe Compiler
 - [x] id_tail **DUVIDA**
 - [x] var_decl_tail
 
-* Function Paramater List
+##### Function Paramater List
 - [x] param_decl_list
 - [x] param_decl
 - [x] param_decl_tail **DUVIDA**
 
-* Function Declarations
+##### Function Declarations
 - [x] func_declarations **DUVIDA**
 - [x] func_decl **DUVIDA**
 - [x] func_decl_tail **DUVIDA**
 - [x] func_body
 
-* Statement List
+##### Statement List
 - [ ] stmt_list
 - [ ] stmt_tail
 - [ ] stmt
 
-* Basic Statements
+##### Basic Statements
 - [ ] assign_stmt
 - [ ] assign_expr
 - [ ] read_stmt
 - [ ] write_stmt
 - [ ] return_stmt
 
-* Expressions
+##### Expressions
 - [ ] expr
 - [ ] expr_tail
 - [ ] factor
@@ -61,7 +61,7 @@ Métodos concluídos da classe Compiler
 - [ ] addop
 - [ ] mulop
 
-* Complex Statements and Condition
+##### Complex Statements and Condition
 - [ ] if_stmt
 - [ ] else_part
 - [ ] cond
