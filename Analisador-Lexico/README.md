@@ -13,28 +13,28 @@ Métodos concluídos da classe Compiler
 * Global String Declaration
 - [x] string_decl_list
 - [x] string_decl
-- [ ] str
-- [x] str_decl_tail
+- [x] str **TERMINAR**
+- [x] str_decl_tail **DUVIDA**
 
 * Variable Declaration
-- [ ] var_decl_list
-- [ ] var_decl
-- [ ] var_type
-- [ ] any_type
-- [ ] id_list
-- [ ] id_tail
-- [ ] var_decl_tail
+- [x] var_decl_list **DUVIDA**
+- [x] var_decl **DUVIDA**
+- [x] var_type
+- [x] any_type **DUVIDA**
+- [x] id_list
+- [x] id_tail **DUVIDA**
+- [x] var_decl_tail
 
 * Function Paramater List
-- [ ] param_decl_list
-- [ ] param_decl
-- [ ] param_decl_tail
+- [x] param_decl_list
+- [x] param_decl
+- [x] param_decl_tail **DUVIDA**
 
 * Function Declarations
-- [ ] func_declarations
-- [ ] func_decl
-- [ ] func_decl_tail
-- [ ] func_body
+- [x] func_declarations **DUVIDA**
+- [x] func_decl **DUVIDA**
+- [x] func_decl_tail **DUVIDA**
+- [x] func_body
 
 * Statement List
 - [ ] stmt_list
