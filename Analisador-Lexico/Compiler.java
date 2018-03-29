@@ -42,10 +42,10 @@ public class Compiler {
 		lexer.nextToken();
 	}
 
-	// id -> IDENTIFIER
+	// id -> IDENT
 	public void id(){
 		// Verifica se é um IDENTIFICADOR
-		if (lexer.token != Symbol.IDENTIFIER){
+		if (lexer.token != Symbol.IDENT){
 			error.signal("Identificador não encontrado");
 		}
 
@@ -253,18 +253,18 @@ public class Compiler {
 			id();
 
 			// Verifica se tem o '(' depois do function
-			if (lexer.token != Symbol.OBRACK){
+			if (lexer.token != Symbol.LPAR){
 				error.signal("faltou (");
 			}
 
 			lexer.nextToken();
 
-			while (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT || lexer.token == Symbol.IDENTIFIER){
+			while (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT || lexer.token == Symbol.IDENT){
 				param_decl_list();
 			}
 
 			// Verifica se tem o ')' depois do param_decl_list
-			if (lexer.token != Symbol.CBRACK){
+			if (lexer.token != Symbol.RPAR){
 				error.signal("faltou )");
 			}
 
@@ -304,7 +304,7 @@ public class Compiler {
 
 	// stmt_list -> stmt stmt_tail | empty
 	public void stmt_list(){
-		if (lexer.token == Symbol.IDENTIFIER || lexer.token == Symbol.READ || lexer.token == Symbol.WRITE || lexer.token == Symbol.RETURN || lexer.token == Symbol.IF || lexer.token == Symbol.FOR){
+		if (lexer.token == Symbol.IDENT || lexer.token == Symbol.READ || lexer.token == Symbol.WRITE || lexer.token == Symbol.RETURN || lexer.token == Symbol.IF || lexer.token == Symbol.FOR){
 			stmt();
 			stmt_tail();
 		}
@@ -312,7 +312,7 @@ public class Compiler {
 
 	// stmt_tail -> stmt stmt_tail | empty
 	public void stmt_tail(){
-		if (lexer.token == Symbol.IDENTIFIER || lexer.token == Symbol.READ || lexer.token == Symbol.WRITE || lexer.token == Symbol.RETURN || lexer.token == Symbol.IF || lexer.token == Symbol.FOR){
+		if (lexer.token == Symbol.IDENT || lexer.token == Symbol.READ || lexer.token == Symbol.WRITE || lexer.token == Symbol.RETURN || lexer.token == Symbol.IF || lexer.token == Symbol.FOR){
 			stmt();
 			stmt_tail();
 		}
@@ -320,7 +320,7 @@ public class Compiler {
 
 	// stmt -> id assign_stmt | read_stmt | write_stmt | return_stmt | if_stmt | for_stmt | id call_expr ;
 	public void stmt(){
-		if (lexer.token == Symbol.IDENTIFIER){
+		if (lexer.token == Symbol.IDENT){
 			id();
 			if (lexer.token == Symbol.LPAR)
 				call_expr();	//call_expr -> id ( {expr_list} )
@@ -375,7 +375,7 @@ public class Compiler {
 			error.signal("Faltou (");
 		lexer.nextToken();
 
-		if (lexer.token != Symbol.IDENTIFIER)
+		if (lexer.token != Symbol.IDENT)
 			error.signal("Faltou variavel");
 		id_list();
 
@@ -398,7 +398,7 @@ public class Compiler {
 			error.signal("Faltou (");
 		lexer.nextToken();
 
-		if (lexer.token != Symbol.IDENTIFIER)
+		if (lexer.token != Symbol.IDENT)
 			error.signal("Faltou variavel");
 		id_list();
 
@@ -443,22 +443,47 @@ public class Compiler {
 
 	// factor -> postfix_expr factor_tail
 	public void factor(){
-
+		postfix_expr();
+		factor_tail();
 	}
 
 	// factor_tail -> mulop postfix_expr factor_tail | empty
 	public void factor_tail(){
-
+		if (lexer.token == Symbol.MULT || lexer.token == Symbol.DIV){
+			mulop();
+			postfix_expr();
+			factor_tail();
+		}
 	}
 
-	// postfix_expr -> primary | call_expr
+	// postfix_expr -> primary | id call_expr
 	public void postfix_expr(){
-
+		if (lexer.token == Symbol.LPAR || lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL){
+			primary();
+		}
+		else if (lexer.token == Symbol.IDENT)
+			id();
+			if (lexer.token == Symbol.LPAR)
+				call_expr();
 	}
 
-	// call_expr -> ( {expr_list} )
+	// call_expr -> ( {expr_list} ) (LER ID ANTES DE CHAMAR A FUNÇÃO)
 	public void call_expr(){
+		if (lexer.token != Symbol.LPAR){
+			error.signal("Faltou (");
+		}
 
+		lexer.nextToken();
+
+		while (lexer.token == Symbol.LPAR || lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL || lexer.token == Symbol.IDENT){
+			expr_list();
+		}
+
+		if (lexer.token != Symbol.RPAR){
+			error.signal("Faltou )");
+		}
+
+		lexer.nextToken();
 	}
 
 	// expr_list -> expr expr_list_tail
@@ -478,12 +503,20 @@ public class Compiler {
 
 	// addop -> + | -
 	public void addop(){
+		if (lexer.token == Symbol.PLUS ||  lexer.token == Symbol.MINUS)
+			lexer.nextToken();
 
+		else
+			error.signal("Faltou + ou -");
 	}
 
 	// mulop -> * | /
 	public void mulop(){
+		if (lexer.token == Symbol.MULT ||  lexer.token == Symbol.DIV)
+			lexer.nextToken();
 
+		else
+			error.signal("Faltou / ou *");
 	}
 
 
@@ -491,7 +524,33 @@ public class Compiler {
 
 	// if_stmt -> IF ( cond ) THEN stmt_list else_part ENDIF
 	public void if_stmt(){
+		if (lexer.token != Symbol.IF)
+			error.signal("Faltou IF");
+		lexer.nextToken();
 
+		if (lexer.token != Symbol.LPAR)
+			error.signal("Faltou (");
+		lexer.nextToken();
+
+		cond();
+
+
+		if (lexer.token != Symbol.RPAR)
+			error.signal("Faltou )");
+		lexer.nextToken();
+
+		if (lexer.token != Symbol.THEN)
+			error.signal("Faltou THEN");
+		lexer.nextToken();
+
+		stmt_list();
+
+		else_part();
+
+
+		if (lexer.token != Symbol.ENDIF)
+			error.signal("Faltou ENDIF");
+		lexer.nextToken();
 	}
 
 	// else_part -> ELSE stmt_list | empty

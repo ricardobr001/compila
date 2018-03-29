@@ -13,7 +13,7 @@ Métodos concluídos da classe Compiler
 ### Global String Declaration
 - [x] string_decl_list
 - [x] string_decl
-- [x] str **TERMINAR**
+- [x] str **TERMINAR/FAZER A VERIFICAÇÃO DOS 30 CARACTERES NO NEXTTOKEN()**
 - [x] str_decl_tail
 
 ### Variable Declaration
@@ -37,25 +37,25 @@ Métodos concluídos da classe Compiler
 - [x] func_body
 
 ### Statement List
-- [ ] stmt_list
-- [ ] stmt_tail
-- [ ] stmt
+- [x] stmt_list
+- [x] stmt_tail
+- [x] stmt
 
 ### Basic Statements
-- [ ] assign_stmt
-- [ ] assign_expr
-- [ ] read_stmt
-- [ ] write_stmt
-- [ ] return_stmt
+- [x] assign_stmt
+- [x] assign_expr
+- [x] read_stmt
+- [x] write_stmt
+- [x] return_stmt
 
 ### Expressions
-- [ ] expr
-- [ ] expr_tail
-- [ ] factor
-- [ ] factor_tail
-- [ ] postfix_expr
-- [ ] call_expr
-- [ ] expr_list
+- [x] expr
+- [x] expr_tail
+- [x] factor
+- [x] factor_tail
+- [x] postfix_expr
+- [x] call_expr
+- [x] expr_list
 - [ ] expr_list_tail
 - [ ] primary
 - [ ] addop
@@ -75,3 +75,7 @@ Métodos concluídos da classe Lexer
 
 ### Correções
 stmt -> TODAS AS REGRAS ANTERIORES | call_expr ;
+id call_expr -> ( {expr_list} ) `ID REMOVIDO DO call_expr`
+id assign_expr -> := expr `ID REMOVIDO DO assign_expr`
+
+Ou seja, toda chamada de `call_expr()` e `assign_expr()` precisa ter a chamada do `id()` antes!!
