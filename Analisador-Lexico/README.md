@@ -74,8 +74,8 @@ Métodos concluídos da classe Lexer
 - [ ] nextToken
 
 ### Correções
-stmt -> TODAS AS REGRAS ANTERIORES | call_expr ;
-id call_expr -> ( {expr_list} ) `ID REMOVIDO DO call_expr`
-id assign_expr -> := expr `ID REMOVIDO DO assign_expr`
+stmt -> TODAS AS REGRAS ANTERIORES | call_expr ;<br/>
+id call_expr -> ( {expr_list} ) `ID REMOVIDO DO call_expr`<br/>
+id assign_expr -> := expr `ID REMOVIDO DO assign_expr`<br/>
 
 Ou seja, toda chamada de `call_expr()` e `assign_expr()` precisa ter a chamada do `id()` antes!!
