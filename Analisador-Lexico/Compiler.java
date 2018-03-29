@@ -555,17 +555,22 @@ public class Compiler {
 
 	// else_part -> ELSE stmt_list | empty
 	public void else_part(){
-
+		if (lexer.token != Symbol.ELSE)
+			error.signal("Faltou ELSE");
+		lexer.nextToken();
+		
+		stmt_list();
 	}
 
 	// cond -> expr compop expr
 	public void cond(){
-
+		expr();
+		compor();
+		expr();
 	}
 
 	// compop -> < | > | =
 	public void compop(){
-
 	}
 
 	// for_stmt -> FOR ({assign_expr}; {cond}; {assign_expr}) stmt_list ENDFOR
