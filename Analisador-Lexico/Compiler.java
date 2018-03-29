@@ -8,7 +8,9 @@ public class Compiler {
     private CompilerError error;
 
     public void compile( char []p_input ) {
-        lexer = new Lexer(p_input, error);
+		error = new CompilerError(null);
+		lexer = new Lexer(p_input, error);
+		error.setLexer(lexer);
         lexer.nextToken();
         program();
 
@@ -328,7 +330,7 @@ public class Compiler {
 				assign_stmt();	//assign_stmt -> assign_expr ;
 								//assign_expr -> id := expr
 			else
-				error.signal("Faltou := ou (")
+				error.signal("Faltou := ou (");
 		}
 		//COLOCAR NO CASO DE TESTE
 
