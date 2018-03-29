@@ -3,7 +3,7 @@ import Error.*;
 
 public class Compiler {
 	// para geracao de codigo
-	public static final boolean GC = false; 
+	public static final boolean GC = false;
 	private Lexer lexer;
     private CompilerError error;
 
@@ -11,11 +11,11 @@ public class Compiler {
         lexer = new Lexer(p_input, error);
         lexer.nextToken();
         program();
-        
+
         if (lexer.token != Symbol.EOF)
 			error.signal("nao chegou no fim do arq");
     }
-    
+
     // Program -> 'PROGRAM' id 'BEGIN' pgm_body 'END'
     public void program(){
 		// Verifica se começou com a palavra PROGRAM
@@ -37,11 +37,11 @@ public class Compiler {
 		// Verifica se tem a palavra END depois do pgm_body
 		if (lexer.token != Symbol.END){
 			error.signal("faltou END");
-		}			
-		
+		}
+
 		lexer.nextToken();
 	}
-	
+
 	// id -> IDENTIFIER
 	public void id(){
 		// Verifica se é um IDENTIFICADOR
@@ -63,13 +63,18 @@ public class Compiler {
 		// Verifica se é uma string
 		if (lexer.token == Symbol.STRING){
 			string_decl_list();
-			decl();
-		}
 
+			if (lexer.token == Symbol.STRING || lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
+				decl();
+			}
+		}
 		// Verifica se é uma variável
-		if (lexer.token == Symbol.IDENTIFIER){
+		else if (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
 			var_decl_list();
-			decl();
+
+			if (lexer.token == Symbol.STRING || lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
+				decl();
+			}
 		}
 	}
 
@@ -78,14 +83,17 @@ public class Compiler {
 		// Verifica se é uma string
 		if (lexer.token == Symbol.STRING){
 			string_decl();
-			string_decl_tail();
+
+			if (lexer.token == Symbol.STRING){
+				string_decl_tail();
+			}
 		}
 	}
 
 	// string_decl -> STRING id := str ; | empty
 	public void string_decl(){
 		// Verifica se é a palavra STRING
-		if (lexer.token == Symbol.STRING){	// Duvida se é assim que faz um OU com empty
+		if (lexer.token == Symbol.STRING){
 			lexer.nextToken();
 			id();
 
@@ -99,18 +107,27 @@ public class Compiler {
 			if (lexer.token != Symbol.SEMICOLON){
 				error.signal("faltou ;");
 			}
+
+			lexer.nextToken();
 		}
 	}
 
 	// str -> STRINGLITERAL
 	public void str(){
+		int i = 0;
 		// Se for aspas
 		if (lexer.token == Symbol.QUOTA){
 			lexer.nextToken();
 
 			// Anda até encontrar a próxima aspas
 			while (lexer.token != Symbol.QUOTA){
-				lexer.nextToken();
+				if (i == 80){
+					error.signal("String literal maior que 80 caracteres");
+				}
+				else{
+					i++;
+					lexer.nextToken();
+				}
 			}
 
 			// Anda, pois encontrou outra aspas
@@ -125,8 +142,8 @@ public class Compiler {
 	public void string_decl_tail(){
 		string_decl();
 
-		while (lexer.token == Symbol.STRING){ 	// Estou em duvida dessa chamada #############################
-			string_decl_tail();					// Coloca direto o string_decl dentro do while???
+		if (lexer.token == Symbol.STRING){
+			string_decl_tail();
 		}
 	}
 
@@ -134,14 +151,14 @@ public class Compiler {
 	public void var_decl_list(){
 		var_decl();
 
-		while (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){	// Mesma duvida do método string_decl_tail
+		if (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
 			var_decl_tail();
 		}
 	}
 
 	// var_decl -> var_type id_list ; | empty
 	public void var_decl(){
-		if (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){	// Duvida se é assim que faz um OU com empty
+		if (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
 			var_type();
 			id_list();
 
@@ -166,6 +183,9 @@ public class Compiler {
 		if (lexer.token != Symbol.VOID){
 			var_type();
 		}
+
+		// Então é VOID
+		lexer.nextToken();
 	}
 
 	// id_list -> id id_tail
@@ -177,7 +197,7 @@ public class Compiler {
 	// id_tail -> , id id_tail | empty
 	public void id_tail(){
 		// Se for uma virgula
-		if (lexer.token == Symbol.COMMA){	// Duvida se é assim que faz um OU com empty
+		if (lexer.token == Symbol.COMMA){
 			lexer.nextToken();
 			id();
 			id_tail();
@@ -187,7 +207,7 @@ public class Compiler {
 	// var_decl_tail -> var_decl {var_decl_tail}
 	public void var_decl_tail(){
 		var_decl();
-		
+
 		while (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){	// Mesma duvida do método string_decl_tail
 			var_decl_tail();
 		}
@@ -208,7 +228,7 @@ public class Compiler {
 	// param_decl_tail -> , param_decl param_decl_tail | empty
 	public void param_decl_tail(){
 		// Verifica se é uma virgula
-		if (lexer.token == Symbol.COMMA){	// Duvida se é assim que faz um OU com empty
+		if (lexer.token == Symbol.COMMA){
 			lexer.nextToken();
 			param_decl();
 			param_decl_tail();
@@ -219,7 +239,7 @@ public class Compiler {
 	public void func_declarations(){
 		func_decl();
 
-		while (lexer.token == Symbol.FUNCTION){		// Mesma duvida do método string_decl_tail
+		if (lexer.token == Symbol.FUNCTION){
 			func_decl_tail();
 		}
 	}
@@ -227,7 +247,7 @@ public class Compiler {
 	// func_decl -> FUNCTION any_type id ({param_decl_list}) BEGIN func_body END | empty
 	public void func_decl(){
 		// Verifica se tem o FUNCTION
-		if (lexer.token == Symbol.FUNCTION){	// Duvida se é assim que faz um OU com empty
+		if (lexer.token == Symbol.FUNCTION){
 			lexer.nextToken();
 			any_type();
 			id();
@@ -242,7 +262,7 @@ public class Compiler {
 			while (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT || lexer.token == Symbol.IDENTIFIER){
 				param_decl_list();
 			}
-			
+
 			// Verifica se tem o ')' depois do param_decl_list
 			if (lexer.token != Symbol.CBRACK){
 				error.signal("faltou )");
@@ -254,7 +274,7 @@ public class Compiler {
 			if (lexer.token != Symbol.BEGIN){
 				error.signal("faltou BEGIN");
 			}
-	
+
 			lexer.nextToken();
 			func_body();
 
@@ -262,7 +282,7 @@ public class Compiler {
 			if (lexer.token != Symbol.END){
 				error.signal("faltou END");
 			}
-			
+
 			lexer.nextToken();
 		}
 	}
@@ -271,7 +291,7 @@ public class Compiler {
 	public void func_decl_tail(){
 		func_decl();
 
-		if (lexer.token == Symbol.FUNCTION){		// Mesma duvida do método string_decl_tail
+		if (lexer.token == Symbol.FUNCTION){
 			func_decl_tail();
 		}
 	}
@@ -281,7 +301,6 @@ public class Compiler {
 		decl();
 		stmt_lis();
 	}
+
+
 }
-    
-    
-    
