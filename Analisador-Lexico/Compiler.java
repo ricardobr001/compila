@@ -565,7 +565,7 @@ public class Compiler {
 	// cond -> expr compop expr
 	public void cond(){
 		expr();
-		compor();
+		compop();
 		expr();
 	}
 
