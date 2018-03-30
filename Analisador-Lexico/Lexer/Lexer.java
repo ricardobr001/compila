@@ -245,15 +245,19 @@ public class Lexer {
 					break;
 
 					//se pa isso foi feito errado na sala
-					case '=':
+					// case '=':
+					// 	token = Symbol.ASSIGN;
+					// break;
+
+					//eh assim
+					case ':':
 						token = Symbol.ASSIGN;
+						tokenPos++;	//n tenho certeza disso
 					break;
 
-					//eu acho q eh assim
-					// case ':':
-					// 	token = Symbol.ASSIGN;
-					// 	tokenPos++;
-					// break;
+					case '=':
+						token = Symbol.EQUAL;
+					break;
 
 					case ',':
 						token = Symbol.COMMA;
@@ -261,6 +265,23 @@ public class Lexer {
 
 					case ';':
 						token = Symbol.SEMICOLON;
+					break;
+
+					//tava faltando esses
+					case '(':
+						token = Symbol.LPAR;
+					break;
+
+					case ')':
+						token = Symbol.RPAR;
+					break;
+
+					case '>':
+						token = Symbol.GT;
+					break;
+
+					case '<':
+						token = Symbol.LT;
 					break;
 
 					default:
