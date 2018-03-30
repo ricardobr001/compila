@@ -18,6 +18,10 @@ public class Compiler {
 			error.signal("nao chegou no fim do arq");
     }
 
+	/* =================================================*/
+	/* 						Program						*/
+	/* =================================================*/
+	
     // Program -> 'PROGRAM' id 'BEGIN' pgm_body 'END'
     public void program(){
 		// Verifica se começou com a palavra PROGRAM
@@ -79,6 +83,10 @@ public class Compiler {
 			}
 		}
 	}
+
+	/* =================================================*/
+	/* 				Global String Declaration			*/
+	/* =================================================*/
 
 	// string_decl_list -> string_decl {string_decl_tail}
 	public void string_decl_list(){
@@ -149,6 +157,10 @@ public class Compiler {
 		}
 	}
 
+	/* =================================================*/
+	/* 				Variable Declaration				*/
+	/* =================================================*/
+	
 	// var_decl_list -> var_decl {var_decl_tail}
 	public void var_decl_list(){
 		var_decl();
@@ -214,6 +226,10 @@ public class Compiler {
 			var_decl_tail();
 		}
 	}
+	
+	/* =================================================*/
+	/* 				Function Paramater List				*/
+	/* =================================================*/
 
 	// param_decl_list -> param_decl param_decl_tail
 	public void param_decl_list(){
@@ -236,6 +252,10 @@ public class Compiler {
 			param_decl_tail();
 		}
 	}
+
+	/* =================================================*/
+	/* 				   Function Declarations			*/
+	/* =================================================*/
 
 	// func_declarations -> func_decl {func_decl_tail}
 	public void func_declarations(){
@@ -304,6 +324,10 @@ public class Compiler {
 		stmt_lis();
 	}
 
+	/* =================================================*/
+	/* 					Statement List					*/
+	/* =================================================*/
+
 	// stmt_list -> stmt stmt_tail | empty
 	public void stmt_list(){
 		if (lexer.token == Symbol.IDENT || lexer.token == Symbol.READ || lexer.token == Symbol.WRITE || lexer.token == Symbol.RETURN || lexer.token == Symbol.IF || lexer.token == Symbol.FOR){
@@ -324,33 +348,38 @@ public class Compiler {
 	public void stmt(){
 		if (lexer.token == Symbol.IDENT){
 			id();
-			if (lexer.token == Symbol.LPAR)
+
+			if (lexer.token == Symbol.LPAR){
 				call_expr();	//call_expr -> id ( {expr_list} )
-			else if (lexer.token == Symbol.ASSIGN)
+			}
+			else if (lexer.token == Symbol.ASSIGN){
 				assign_stmt();	//assign_stmt -> assign_expr ;
-								//assign_expr -> id := expr
-			else
+			}					//assign_expr -> id := expr
+			else{
 				error.signal("Faltou := ou (");
+			}
 		}
-		//COLOCAR NO CASO DE TESTE
-
-		else if (lexer.token == Symbol.READ)
+		else if (lexer.token == Symbol.READ){
 		 	read_stmt();
-
-		else if (lexer.token == Symbol.WRITE)
+		}
+		else if (lexer.token == Symbol.WRITE){
 		 	write_stmt();
-
-		else if (lexer.token == Symbol.RETURN)
+		}
+		else if (lexer.token == Symbol.RETURN){
 		 	return_stmt();
-
-		else if (lexer.token == Symbol.IF)
+		}
+		else if (lexer.token == Symbol.IF){
 		 	if_stmt();
-
-		else if (lexer.token == Symbol.FOR)
+		}
+		else if (lexer.token == Symbol.FOR){
 			for_stmt();
+		}
 	}
 
-	/* Basic Statements */
+	/* =================================================*/
+	/* 					Basic Statements				*/
+	/* =================================================*/
+
 	// assign_stmt -> assign_expr ;
 	public void assign_stmt(){
 		assign_expr();
@@ -426,7 +455,9 @@ public class Compiler {
 	}
 
 
-	/* Expressions */
+	/* =================================================*/
+	/* 					Expressions						*/
+	/* =================================================*/
 
 	// expr -> factor expr_tail
 	public void expr(){
@@ -490,78 +521,111 @@ public class Compiler {
 
 	// expr_list -> expr expr_list_tail
 	public void expr_list(){
-
+		expr();
+		expr_list_tail();
 	}
 
 	// expr_list_tail -> , expr expr_list_tail | empty
 	public void expr_list_tail(){
-
+		// Se for uma virgula, chama expr e expr_list_tail
+		if (lexer.token == Symbol.COMMA){
+			lexer.nextToken();
+			expr();
+			expr_list_tail();
+		}
 	}
 
 	// primary -> (expr) | id | INTLITERAL | FLOATLITERAL
 	public void primary(){
+		// Se for um '(', anda e chama expr e verifica se tem ')'
+		if (lexer.token == Symbol.LPAR){
+			lexer.nextToken();
+			expr();
 
+			if (lexer.token != Symbol.RPAR){
+				error.signal("Faltou )");
+			}
+
+			lexer.nextToken();
+		}
+		else if(lexer.token == Symbol.IDENT){
+			id();
+		}
+		else if(lexer.token == Symbol.INTLITERAL){
+			// O que fazer se for INTLITERAL?
+		}
+		else{
+			// O que fazer se for FLOATLITERAL?
+		}
 	}
 
 	// addop -> + | -
 	public void addop(){
-		if (lexer.token == Symbol.PLUS ||  lexer.token == Symbol.MINUS)
+		if (lexer.token == Symbol.PLUS ||  lexer.token == Symbol.MINUS){
 			lexer.nextToken();
-
-		else
+		}
+		else{
 			error.signal("Faltou + ou -");
+		}
 	}
 
 	// mulop -> * | /
 	public void mulop(){
-		if (lexer.token == Symbol.MULT ||  lexer.token == Symbol.DIV)
+		if (lexer.token == Symbol.MULT ||  lexer.token == Symbol.DIV){
 			lexer.nextToken();
-
-		else
+		}
+		else{
 			error.signal("Faltou / ou *");
+		}
 	}
 
 
-	/* Complex Statements and Condition */
+	/* =================================================*/
+	/* 			Complex Statements and Condition		*/
+	/* =================================================*/
 
 	// if_stmt -> IF ( cond ) THEN stmt_list else_part ENDIF
 	public void if_stmt(){
-		if (lexer.token != Symbol.IF)
+		if (lexer.token != Symbol.IF){
 			error.signal("Faltou IF");
+		}
+
 		lexer.nextToken();
 
-		if (lexer.token != Symbol.LPAR)
+		if (lexer.token != Symbol.LPAR){
 			error.signal("Faltou (");
+		}
+	
 		lexer.nextToken();
-
 		cond();
 
-
-		if (lexer.token != Symbol.RPAR)
+		if (lexer.token != Symbol.RPAR){
 			error.signal("Faltou )");
+		}
+
 		lexer.nextToken();
 
-		if (lexer.token != Symbol.THEN)
+		if (lexer.token != Symbol.THEN){
 			error.signal("Faltou THEN");
+		}
+
 		lexer.nextToken();
-
 		stmt_list();
-
 		else_part();
 
-
-		if (lexer.token != Symbol.ENDIF)
+		if (lexer.token != Symbol.ENDIF){
 			error.signal("Faltou ENDIF");
+		}
 		lexer.nextToken();
 	}
 
 	// else_part -> ELSE stmt_list | empty
 	public void else_part(){
-		if (lexer.token != Symbol.ELSE)
-			error.signal("Faltou ELSE");
-		lexer.nextToken();
-		
-		stmt_list();
+		// Se tiver else, anda e chama stmt_list
+		if (lexer.token == Symbol.ELSE){
+			lexer.nextToken();	
+			stmt_list();
+		}
 	}
 
 	// cond -> expr compop expr
@@ -573,9 +637,68 @@ public class Compiler {
 
 	// compop -> < | > | =
 	public void compop(){
+		// Verifica se é um dos simbolos, se for anda o token
+		if (lexer.token == Symbol.LT || lexer.token == Symbol.GT || lexer.token == Symbol.EQUAL){
+			lexer.nextToken();
+		}
+		else{
+			error.signal("Faltou < ou > ou =");
+		}
 	}
 
-	// for_stmt -> FOR ({assign_expr}; {cond}; {assign_expr}) stmt_list ENDFOR
+	// for_stmt -> FOR ({assign_expr}; {cond}; {id assign_expr}) stmt_list ENDFOR
 	public void for_stmt(){
+		if (lexer.token != Symbol.FOR){
+			error.signal("Faltou FOR");
+		}
 
-	}}
+		lexer.nextToken();
+
+		if (lexer.token != Symbol.LPAR){
+			error.signal("Faltou (");
+		}
+
+		lexer.nextToken();
+
+		// Enquanto for declaração de variáveis no for, verifica as variáveis
+		while (lexer.token == Symbol.IDENT){
+			assign_expr();
+		}
+
+		if (lexer.token != Symbol.SEMICOLON){
+			error.signal("Faltou ;");
+		}
+
+		lexer.nextToken();
+
+		// Enquanto for um IDENT ou '(' ou ')' ou float ou int, chama o cond()
+		while (lexer.token == Symbol.LPAR || lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL || lexer.token == Symbol.IDENT){
+			cond();
+		}
+
+		if (lexer.token != Symbol.SEMICOLON){
+			error.signal("Faltou ;");
+		}
+
+		lexer.nextToken();
+
+		// Enquanto for um IDENT, chama o id() e assign_expr()
+		while(lexer.token == Symbol.IDENT){
+			id();
+			assign_expr();
+		}
+
+		if (lexer.token != Symbol.RPAR){
+			error.signal("Faltou )");
+		}
+
+		lexer.nextToken();
+		stmt_list();
+
+		if (lexer.token != Symbol.ENDFOR){
+			error.signal("Faltou ENDFOR");
+		}
+
+		lexer.nextToken();
+	}
+}

@@ -56,24 +56,24 @@ Métodos concluídos da classe Compiler
 - [x] postfix_expr
 - [x] call_expr
 - [x] expr_list
-- [ ] expr_list_tail
-- [ ] primary
-- [ ] addop
-- [ ] mulop
+- [x] expr_list_tail
+- [x] primary **DUVIDA**
+- [x] addop
+- [x] mulop
 
 ### Complex Statements and Condition
-- [ ] if_stmt
-- [ ] else_part
-- [ ] cond
-- [ ] compop
-- [ ] for_stmt
+- [x] if_stmt
+- [x] else_part
+- [x] cond
+- [x] compop
+- [x] for_stmt
 
 # Lexer
 Métodos concluídos da classe Lexer
 
 - [ ] nextToken
 
-### Correções
+# Correções
 stmt -> TODAS AS REGRAS ANTERIORES | call_expr ;<br/>
 id call_expr -> ( {expr_list} ) `ID REMOVIDO DO call_expr`<br/>
 id assign_expr -> := expr `ID REMOVIDO DO assign_expr`<br/>
