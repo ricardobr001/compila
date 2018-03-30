@@ -26,11 +26,33 @@ public class Lexer {
         keywordsTable = new Hashtable<String, Symbol>();
         keywordsTable.put( "begin", Symbol.BEGIN );
         keywordsTable.put( "end", Symbol.END );
+
+        //adicionados
+        keywordsTable.put( "function", Symbol.FUNCTION);
+        keywordsTable.put( "read", Symbol.READ);
+        keywordsTable.put( "write", Symbol.WRITE);
+        keywordsTable.put( "if", Symbol.IF);
+        keywordsTable.put( "then", Symbol.THEN);
+        keywordsTable.put( "else", Symbol.ELSE);
+        keywordsTable.put( "endif", Symbol.ENDIF);
+        keywordsTable.put( "return", Symbol.RETURN);
+        keywordsTable.put( "for", Symbol.FOR);
+        keywordsTable.put( "endfor", Symbol.ENDFOR);
+        keywordsTable.put( "float", Symbol.FLOAT);
+        keywordsTable.put( "int", Symbol.INT);
+        keywordsTable.put( "void", Symbol.VOID);
+        keywordsTable.put( "string", Symbol.STRING);
+
+        //nao tenho certeza
+        keywordsTable.put( "eof", Symbol.EOF);
+        keywordsTable.put( "Ident", Symbol.IDENT);
+        keywordsTable.put( "IntNumber", Symbol.INTLITERAL);
+        keywordsTable.put( "FloatNumber", Symbol.FLOATLITERAL);
+        keywordsTable.put( "StringLiteral", Symbol.STRINGLITERAL);
+        keywordsTable.put( "program", Symbol.PROGRAM);
     }    
     
     public void nextToken() {
-        
-
 		if (DEBUGLEXER)
 			System.out.println(token.toString());
             
