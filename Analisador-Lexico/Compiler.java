@@ -124,27 +124,12 @@ public class Compiler {
 
 	// str -> STRINGLITERAL
 	public void str(){
-		int i = 0;
-		// Se for aspas
-		if (lexer.token == Symbol.QUOTA){
-			lexer.nextToken();
 
-			// Anda até encontrar a próxima aspas
-			while (lexer.token != Symbol.QUOTA){
-				if (i == 80){
-					error.signal("String literal maior que 80 caracteres");
-				}
-				else{
-					i++;
-					lexer.nextToken();
-				}
-			}
-
-			// Anda, pois encontrou outra aspas
+		if (lexer.token == Symbol.STRINGLITERAL){
 			lexer.nextToken();
 		}
 		else {
-			error.signal("faltou \"");
+			error.signal("erro na string");
 		}
 	}
 
@@ -321,7 +306,7 @@ public class Compiler {
 	// func_body -> decl stmt_list
 	public void func_body(){
 		decl();
-		stmt_lis();
+		stmt_list();
 	}
 
 	/* =================================================*/

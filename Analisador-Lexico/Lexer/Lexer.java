@@ -36,35 +36,56 @@ public class Lexer {
     // this code will be executed only once for each program execution
     static {
         keywordsTable = new Hashtable<String, Symbol>();
-        keywordsTable.put( "begin", Symbol.BEGIN );
-        keywordsTable.put( "end", Symbol.END );
+		
+		// Palavras reservadas
+		keywordsTable.put("BEGIN", Symbol.BEGIN);
+        keywordsTable.put("END", Symbol.END);
+		keywordsTable.put("Ident", Symbol.IDENT);
+		keywordsTable.put("IntNumber", Symbol.INTLITERAL);
+		keywordsTable.put("FloatNumber", Symbol.FLOATLITERAL);
+		keywordsTable.put("StringLiteral", Symbol.STRINGLITERAL);
+		keywordsTable.put("PROGRAM", Symbol.PROGRAM);
+		keywordsTable.put("BEGIN", Symbol.BEGIN);
+		keywordsTable.put("FUNCTION", Symbol.FUNCTION);
+		keywordsTable.put("READ", Symbol.READ);
+		keywordsTable.put("WRITE", Symbol.WRITE);
+		keywordsTable.put("IF", Symbol.IF);
+		keywordsTable.put("THEN", Symbol.THEN);
+		keywordsTable.put("ELSE", Symbol.ELSE);
+		keywordsTable.put("ENDIF", Symbol.ENDIF);
+		keywordsTable.put("RETURN", Symbol.RETURN);
+		keywordsTable.put("FOR", Symbol.FOR);
+		keywordsTable.put("ENDFOR", Symbol.ENDFOR);
+		keywordsTable.put("FLOAT", Symbol.FLOAT);
+		keywordsTable.put("INT", Symbol.INT);
+		keywordsTable.put("VOID", Symbol.VOID);
+		keywordsTable.put("STRING", Symbol.STRING);
 
-        //adicionados
-        keywordsTable.put( "function", Symbol.FUNCTION);
-        keywordsTable.put( "read", Symbol.READ);
-        keywordsTable.put( "write", Symbol.WRITE);
-        keywordsTable.put( "if", Symbol.IF);
-        keywordsTable.put( "then", Symbol.THEN);
-        keywordsTable.put( "else", Symbol.ELSE);
-        keywordsTable.put( "endif", Symbol.ENDIF);
-        keywordsTable.put( "return", Symbol.RETURN);
-        keywordsTable.put( "for", Symbol.FOR);
-        keywordsTable.put( "endfor", Symbol.ENDFOR);
-        keywordsTable.put( "float", Symbol.FLOAT);
-        keywordsTable.put( "int", Symbol.INT);
-        keywordsTable.put( "void", Symbol.VOID);
-        keywordsTable.put( "string", Symbol.STRING);
+		// Operadores
+		keywordsTable.put("+", Symbol.PLUS);
+		keywordsTable.put("-", Symbol.MINUS);
+		keywordsTable.put("*", Symbol.MULT);
+		keywordsTable.put("/", Symbol.DIV);
+		keywordsTable.put("=", Symbol.EQUAL);
+		keywordsTable.put("<", Symbol.LT);
+		keywordsTable.put(">", Symbol.GT);
+		keywordsTable.put("(", Symbol.LPAR);
+		keywordsTable.put(")", Symbol.RPAR);
+		keywordsTable.put(":=", Symbol.ASSIGN);
+		keywordsTable.put(",", Symbol.COMMA);
+		keywordsTable.put(";", Symbol.SEMICOLON);
 
-        //nao tenho certeza
-        keywordsTable.put( "eof", Symbol.EOF);
-        keywordsTable.put( "Ident", Symbol.IDENT);
-        keywordsTable.put( "IntNumber", Symbol.INTLITERAL);
-        keywordsTable.put( "FloatNumber", Symbol.FLOATLITERAL);
-        keywordsTable.put( "StringLiteral", Symbol.STRINGLITERAL);
-        keywordsTable.put( "program", Symbol.PROGRAM);
+		// EOF
+		keywordsTable.put("eof", Symbol.EOF);
     }
 
     public void nextToken() {
+		System.out.println("Entrou aqui");
+
+
+
+
+
     	//Pula espaços e quebra de linhas
 		while (input[tokenPos] == ' ' || input[tokenPos] == '\n' || input[tokenPos] != '\t'){
 			if (input[tokenPos] == '\n'){
@@ -80,7 +101,7 @@ public class Lexer {
 		}
 
 		//Verifica linhas comentadas
-		if (input[tokenPos] == '/' && input[tokenPos + 1] == '/'){
+		if (input[tokenPos] == '-' && input[tokenPos + 1] == '-'){
 			while (input[tokenPos] != '\n'){
 				tokenPos++;
 			}
@@ -90,209 +111,115 @@ public class Lexer {
 		}
 
 		//Verifica se é um número
-		String aux;
+		String aux = new String();
 		while(Character.isDigit(input[tokenPos])){
 			aux = aux + input[tokenPos];
 			tokenPos++;
 		}
 
-		if (!aux.equal("")){
-			numberValue = Integer.parseInt(aux);
-			if (numberValue > MaxValueInteger){
-				error.signal("Numero maior que 32768");
+		// Se a string aux não for vazia
+		if (!aux.equals("")){
+			// Se for um ponto, e o próximo for um número, temos um float
+			if (input[tokenPos] == '.' && Character.isDigit(input[tokenPos + 1])){
+				while(Character.isDigit(input[tokenPos])){
+					aux = aux + input[tokenPos];
+					tokenPos++;
+				}
 			}
-			token = Symbol.NUMBER;
+
+			// Se não temos um int
+			else{
+				numberValue = Integer.parseInt(aux);
+
+				// Verifica se o número é maior que o valor máximo permitido
+				if (numberValue > MaxValueInteger){
+					error.signal("Numero maior que 32768");
+				}
+
+				token = Symbol.INTLITERAL;
+			}
 		}
 		//Verifica se é string
 		else {
+			// Enquanto for letra, anda o token e armazena na string aux
 			while(Character.isLetter(input[tokenPos])){
 				aux = aux + input[tokenPos];
 				tokenPos++;
 			}
 
+			// Se a string aux não for vazia
 			if (!aux.equals("")){
 				Symbol temp;
-
 				temp = keywordsTable.get(aux);
+
 				//se nao for palavra reservada, é nome de variavel (Duvida: entao nome de variavel nao pode ter numero?)
+				// Acredito que possa ser ou um IDENT ou STRINGLITERAL
+				// O IDENT pode ter no máximo tamanho 30, com o '\0', tamanho 31
+				// A STRINGLITERAL 80, incluindo o '\0', logo a STRINGLITERAL entre as aspas, tem tamanho 81 no máximo 
+				// Pois 80 - 1 = 79
+				// 79 + as duas aspas = 81
 				if (temp == null){
+					String var = new String();
+
+					// Se começar com \", é uma string literal
+					if (input[tokenPos] == '\"'){
+						// Inserindo a primeira '\"'
+						var += input[tokenPos];
+						tokenPos++;
+
+						// Enquanto for menor que 80, inserimos na string var
+						for (int i = 0 ; i < MaxStringSize && input[tokenPos] != '\"'; i++, tokenPos++){
+							var += input[tokenPos];
+						}
+
+						// Se for maior que 81, a string literal tem tamanho maior que 80
+						if (var.length() > 81){
+							error.signal("String maior que 79 caracteres");
+						}
+
+						token = Symbol.STRINGLITERAL;
+					}
+
+					// Se não começa com '\"', é um ident
+					else {
+						// Precisa começar com uma letra
+						if (Character.isLetter(input[tokenPos])){
+							// Percorremos o identificador até chegar no tamanho 30 ou encontrar algo diferente de letra ou número
+							for (int i = 0 ; i < MaxIdentSize && Character.isLetterOrDigit(input[tokenPos]) ; i++, tokenPos++){
+								var += input[tokenPos];
+							}
+
+							// Se for maior que 30, é um identificador invalido
+							if (var.length() > 30){
+								error.signal("A variavel precisa ter um tamanho maximo de 30 caracteres");
+							}
+
+							// Se saio do laço e é menor que 30, pode ser um caracter invalido na ultima posição
+							else if (Character.isLetterOrDigit(var.charAt(var.length() - 1))){
+								error.signal("Nome de variavel invalido, encontrado \'" + var.charAt(var.length() - 1) + "\', caractere invalido");
+							}
+
+							token = Symbol.IDENT;
+						}
+						else{
+							error.signal("A variavel precisa começar com uma letra, encontrado \'" + var.charAt(var.length() - 1) + "\', caractere invalido");
+						}
+					}
 					token = Symbol.IDENT;
 					stringValue = aux;
 				}
+
+				// Caso esteja na tabela Hash
 				else {
+					// O token toma o valor do que foi encontrado na tabela hash
 					token = temp;
-
-
-
-
-
-				
-				//define qual palavra reservada é (NAO TENHO CERTEZA DE NADA)
-					switch (token){
-						case 'begin':
-							token = Symbol.BEGIN;
-						break;
-
-						case 'end':
-							token = Symbol.END;
-						break;
-
-						case 'function':
-							token = Symbol.FUNCTION;
-						break;
-
-						case 'read':
-							token = Symbol.READ;
-						break;
-
-						case 'write':
-							token = Symbol.WRITE;
-						break;
-
-						case 'if':
-							token = Symbol.IF;
-						break;
-
-						case 'then':
-							token = Symbol.THEN;
-						break;
-
-						case 'else':
-							token = Symbol.ELSE;
-						break;
-
-						case 'endif':
-							token = Symbol.ENDIF;
-						break;
-
-						case 'return':
-							token = Symbol.RETURN;
-						break;
-
-						case 'for':
-							token = Symbol.FOR;
-						break;
-
-						case 'endfor':
-							token = Symbol.ENDFOR;
-						break;
-
-						case 'float':
-							token = Symbol.FLOAT;
-						break;
-
-						case 'int':
-							token = Symbol.INT;
-						break;
-
-						case 'void':
-							token = Symbol.VOID;
-						break;
-
-						case 'string':
-							token = Symbol.STRING;
-						break;
-
-						case 'eof':
-							token = Symbol.EOF;
-						break;
-
-						case 'Ident':
-							token = Symbol.IDENT;
-						break;
-
-						case 'IntNumber':
-							token = Symbol.INTLITERAL;
-						break;
-
-						case 'FloatNumber':
-							token = Symbol.FLOATLITERAL;
-						break;
-
-						case 'StringLiteral':
-							token = Symbol.STRINGLITERAL;
-						break;
-
-						case 'program':
-							token = Symbol.PROGRAM;
-						break;
-
-					default:
-						error.signal("Erro lexico");
 				}
-				//FIM DA PARTE Q EU NAO TENHO CERTEZA NENHUMA
-
-
-
-			}
-			//verifica se eh um dos operadores
-			else {
-				switch (input[tokenPos]){
-					case '+':
-						token = Symbol.PLUS;
-					break;
-
-					case '-':
-						token = Symbol.MINUS;
-					break;
-
-					case '*':
-						token = Symbol.MULT;
-					break;
-
-					case '/':
-						token = Symbol.DIV;
-					break;
-
-					//se pa isso foi feito errado na sala
-					// case '=':
-					// 	token = Symbol.ASSIGN;
-					// break;
-
-					//eh assim
-					case ':':
-						token = Symbol.ASSIGN;
-						tokenPos++;	//n tenho certeza disso
-					break;
-
-					case '=':
-						token = Symbol.EQUAL;
-					break;
-
-					case ',':
-						token = Symbol.COMMA;
-					break;
-
-					case ';':
-						token = Symbol.SEMICOLON;
-					break;
-
-					//tava faltando esses
-					case '(':
-						token = Symbol.LPAR;
-					break;
-
-					case ')':
-						token = Symbol.RPAR;
-					break;
-
-					case '>':
-						token = Symbol.GT;
-					break;
-
-					case '<':
-						token = Symbol.LT;
-					break;
-
-					default:
-						error.signal("Erro lexico");
-				}
-				tokenPos++;
 			}
 		}
 
 		if (DEBUGLEXER)
 			System.out.println(token.toString());
+
         lastTokenPos = tokenPos - 1;
     }
 
@@ -333,7 +260,11 @@ public class Lexer {
 
     public char getCharValue() {
         return charValue;
-    }
+	}
+	// Max ident size and max string size
+	private int MaxStringSize = 81;
+	private int MaxIdentSize = 30;
+
     // current token
     public Symbol token;
     private String stringValue;
