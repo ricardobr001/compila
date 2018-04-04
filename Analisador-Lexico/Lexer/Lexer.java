@@ -80,14 +80,8 @@ public class Lexer {
     }
 
     public void nextToken() {
-		System.out.println("Entrou aqui");
-
-
-
-
-
     	//Pula espaços e quebra de linhas
-		while (input[tokenPos] == ' ' || input[tokenPos] == '\n' || input[tokenPos] != '\t'){
+		while (input[tokenPos] == ' ' || input[tokenPos] == '\n' || input[tokenPos] == '\t'){
 			if (input[tokenPos] == '\n'){
 				lineNumber++;
 			}
@@ -159,22 +153,16 @@ public class Lexer {
 				// Pois 80 - 1 = 79
 				// 79 + as duas aspas = 81
 				if (temp == null){
-					String var = new String();
-
 					// Se começar com \", é uma string literal
-					if (input[tokenPos] == '\"'){
-						// Inserindo a primeira '\"'
-						var += input[tokenPos];
-						tokenPos++;
-
-						// Enquanto for menor que 80, inserimos na string var
-						for (int i = 0 ; i < MaxStringSize && input[tokenPos] != '\"'; i++, tokenPos++){
-							var += input[tokenPos];
+					if (aux.charAt(0) == '\"'){
+						// Se for maior que 81, a string literal tem tamanho maior que 80
+						if (aux.length() > 81){
+							error.signal("String maior que 79 caracteres");
 						}
 
-						// Se for maior que 81, a string literal tem tamanho maior que 80
-						if (var.length() > 81){
-							error.signal("String maior que 79 caracteres");
+						// Se o ultimo caracter não for uma '"'
+						else if (aux.charAt(aux.length() - 1) != '\"'){
+							error.signal("A string precisa estar entre aspas duplas");
 						}
 
 						token = Symbol.STRINGLITERAL;
@@ -183,30 +171,24 @@ public class Lexer {
 					// Se não começa com '\"', é um ident
 					else {
 						// Precisa começar com uma letra
-						if (Character.isLetter(input[tokenPos])){
-							// Percorremos o identificador até chegar no tamanho 30 ou encontrar algo diferente de letra ou número
-							for (int i = 0 ; i < MaxIdentSize && Character.isLetterOrDigit(input[tokenPos]) ; i++, tokenPos++){
-								var += input[tokenPos];
-							}
-
+						if (Character.isLetter(aux.charAt(0))){
 							// Se for maior que 30, é um identificador invalido
-							if (var.length() > 30){
+							if (aux.length() > 30){
 								error.signal("A variavel precisa ter um tamanho maximo de 30 caracteres");
 							}
 
 							// Se saio do laço e é menor que 30, pode ser um caracter invalido na ultima posição
-							else if (Character.isLetterOrDigit(var.charAt(var.length() - 1))){
-								error.signal("Nome de variavel invalido, encontrado \'" + var.charAt(var.length() - 1) + "\', caractere invalido");
+							else if (containsOnlyNumbersAndDigits(aux)){
+								error.signal("Nome de variavel invalido, encontrado caractere invalido em \'" + aux + "\'");
 							}
 
 							token = Symbol.IDENT;
+							stringValue = aux;
 						}
 						else{
-							error.signal("A variavel precisa começar com uma letra, encontrado \'" + var.charAt(var.length() - 1) + "\', caractere invalido");
-						}
-					}
-					token = Symbol.IDENT;
-					stringValue = aux;
+							error.signal("O nome da variavel precisa começar com uma letra, encontrado caractere invalido em \'" + aux + "\'");
+						}						
+					}					
 				}
 
 				// Caso esteja na tabela Hash
@@ -261,6 +243,23 @@ public class Lexer {
     public char getCharValue() {
         return charValue;
 	}
+
+	private boolean containsOnlyNumbersAndDigits(String str){
+		// Se a str for vazia ou nula, retorna falso
+		if (str == null || str.length() == 0){
+			return false;
+		}
+
+		for (int i = 0 ; i < str.length() ; i++){
+			// Se a string possuir algo que não seja digito ou letra, retorna falso
+			if (!Character.isLetterOrDigit(str.charAt(i))){
+				return false;
+			}
+		}
+
+		return true;
+	}
+	
 	// Max ident size and max string size
 	private int MaxStringSize = 81;
 	private int MaxIdentSize = 30;
