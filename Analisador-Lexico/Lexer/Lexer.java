@@ -24,7 +24,7 @@ public class Lexer {
     // this code will be executed only once for each program execution
     static {
         keywordsTable = new Hashtable<String, Symbol>();
-		
+
 		// Palavras reservadas
 		keywordsTable.put("BEGIN", Symbol.BEGIN);
         keywordsTable.put("END", Symbol.END);
@@ -33,7 +33,6 @@ public class Lexer {
 		keywordsTable.put("FloatNumber", Symbol.FLOATLITERAL);
 		keywordsTable.put("StringLiteral", Symbol.STRINGLITERAL);
 		keywordsTable.put("PROGRAM", Symbol.PROGRAM);
-		keywordsTable.put("BEGIN", Symbol.BEGIN);
 		keywordsTable.put("FUNCTION", Symbol.FUNCTION);
 		keywordsTable.put("READ", Symbol.READ);
 		keywordsTable.put("WRITE", Symbol.WRITE);
@@ -69,7 +68,7 @@ public class Lexer {
 
     public void nextToken() {
     	//Pula espaços e quebra de linhas
-		while (input[tokenPos] == ' ' || input[tokenPos] == '\n' || input[tokenPos] == '\t'){
+		while (input[tokenPos] == ' ' || input[tokenPos] == '\n' || input[tokenPos] == '\t' || input[tokenPos] == '\r'){
 			if (input[tokenPos] == '\n'){
 				lineNumber++;
 			}
@@ -103,9 +102,41 @@ public class Lexer {
 		if (!aux.equals("")){
 			// Se for um ponto, e o próximo for um número, temos um float
 			if (input[tokenPos] == '.' && Character.isDigit(input[tokenPos + 1])){
+				// Colocamos o ponto na string aux
+				aux = aux + input[tokenPos];
+				tokenPos++;
+
+				// Enquanto for digito, popula a string aux
 				while(Character.isDigit(input[tokenPos])){
 					aux = aux + input[tokenPos];
 					tokenPos++;
+				}
+
+				if (input[tokenPos] == ' ' || input[tokenPos] == '\n' || input[tokenPos] == '\t' || input[tokenPos] == '\r'){
+					token = Symbol.FLOATLITERAL;
+				}
+				else {
+					error.signal("Float invalido, encontrado " + input[tokenPos] + " após " + aux);
+				}
+			}
+
+			// Podemos ter um float iniciado com '.'
+			else if (input[tokenPos] == '.' && Character.isDigit(input[tokenPos + 1])){
+				// Colocamos o ponto na string aux
+				aux = aux + input[tokenPos];
+				tokenPos++;
+
+				// Enquanto for digito, popula a string aux
+				while(Character.isDigit(input[tokenPos])){
+					aux = aux + input[tokenPos];
+					tokenPos++;
+				}
+
+				if (input[tokenPos] == ' ' || input[tokenPos] == '\n' || input[tokenPos] == '\t' || input[tokenPos] == '\r'){
+					token = Symbol.FLOATLITERAL;
+				}
+				else {
+					error.signal("Float invalido, encontrado " + input[tokenPos] + " após " + aux);
 				}
 			}
 
@@ -123,17 +154,19 @@ public class Lexer {
 		}
 
 		// Verifica se é string
-		else {	
+		else {
 			// Enquanto for letra, anda o token e armazena na string aux
 			while(Character.isLetter(input[tokenPos])){
+				// System.out.println("TA NO WHILE");
 				aux = aux + input[tokenPos];
 				tokenPos++;
 			}
-			//System.out.println("STRING LIDA = " + aux);	
-			//System.out.println("TOKEN ="+ input[tokenPos] + input[tokenPos+1]+input[tokenPos+2]);
+			// System.out.println("STRING LIDA = " + aux);
+			// System.out.println("TOKEN ="+ input[tokenPos] + input[tokenPos+1]+input[tokenPos+2]);
 
 			// Se o conteudo não for vazio, pode ser uma palavra reservada ou ident
 			if (!aux.equals("")){
+				// System.out.println("Leu uma palavra");
 				// Verificamos se o conteudo está na tabela hash
 				Symbol temp = keywordsTable.get(aux);
 
@@ -160,11 +193,15 @@ public class Lexer {
 			}
 			// Pode ser stringliteral ou simbolo, a string aux aqui com certeza sera vazia
 			else {
+				// System.out.println("STRING LIDA = " + aux);
+				//System.out.println("TOKEN ="+ input[tokenPos] + input[tokenPos+1]+input[tokenPos+2]);
 				// Se não for uma aspas, é um simbolo
 				if (input[tokenPos] != '\"'){
 					// Como temos apenas um simbolo reservado tem dois caracteres, adicionamos o primeiro
 					aux = aux + input[tokenPos];
 					tokenPos++;
+					// System.out.println("STRING LIDA = " + aux);
+					//System.out.println("TOKEN ="+ input[tokenPos] + input[tokenPos+1]+input[tokenPos+2]);
 
 					// Verificando se o simbolo está na tabela hash
 					Symbol temp = keywordsTable.get(aux);
@@ -181,6 +218,7 @@ public class Lexer {
 
 						// Verificando se o simbolo está na tabela hash
 						temp = keywordsTable.get(aux);
+						// System.out.println("STRING LIDA = " + aux);
 
 						// Se ele estiver na tabela
 						if (temp != null){
@@ -191,6 +229,7 @@ public class Lexer {
 
 				// Caso contrário é stringliteral
 				else{
+					// System.out.println("É STRING LITERAL");
 					int aspas = 0;
 
 					// Enquanto não encontrar as duas aspas, popula a string aux
@@ -199,7 +238,7 @@ public class Lexer {
 						if (input[tokenPos] == '\"'){
 							aspas++;
 						}
-						
+
 						aux = aux + input[tokenPos];
 						tokenPos++;
 					}
@@ -209,8 +248,10 @@ public class Lexer {
 						token = Symbol.STRINGLITERAL;
 					}
 				}
-			}		
+			}
 		}
+
+		// System.out.println("TOKEN ="+ input[tokenPos] + input[tokenPos+1]+input[tokenPos+2]);
 
 		if (DEBUGLEXER)
 			System.out.println(token.toString());
@@ -297,7 +338,7 @@ public class Lexer {
 		return true;
 	}
 
-	// A STRINGLITERAL 80, incluindo o '\0', logo a STRINGLITERAL entre as aspas, tem tamanho 81 no máximo 
+	// A STRINGLITERAL 80, incluindo o '\0', logo a STRINGLITERAL entre as aspas, tem tamanho 81 no máximo
 	// Pois 80 - 1 = 79
 	// 79 + as duas aspas = 81
 	private boolean validStringLiteral(String str){
@@ -318,7 +359,7 @@ public class Lexer {
 
 		return false;
 	}
-	
+
 	// Max ident size and max string size
 	private int MaxStringSize = 81;
 	private int MaxIdentSize = 30;

@@ -21,7 +21,7 @@ public class Compiler {
 	/* =================================================*/
 	/* 						Program						*/
 	/* =================================================*/
-	
+
     // Program -> 'PROGRAM' id 'BEGIN' pgm_body 'END'
     public void program(){
 		// Verifica se começou com a palavra PROGRAM
@@ -145,7 +145,7 @@ public class Compiler {
 	/* =================================================*/
 	/* 				Variable Declaration				*/
 	/* =================================================*/
-	
+
 	// var_decl_list -> var_decl {var_decl_tail}
 	public void var_decl_list(){
 		var_decl();
@@ -190,7 +190,9 @@ public class Compiler {
 		}
 
 		// Então é VOID
-		lexer.nextToken();
+		else {
+			lexer.nextToken();
+		}
 	}
 
 	// id_list -> id id_tail
@@ -217,7 +219,7 @@ public class Compiler {
 			var_decl_tail();
 		}
 	}
-	
+
 	/* =================================================*/
 	/* 				Function Paramater List				*/
 	/* =================================================*/
@@ -271,8 +273,10 @@ public class Compiler {
 			}
 
 			lexer.nextToken();
+			// System.out.println("Chamou o token");
 
-			while (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT || lexer.token == Symbol.IDENT){
+			while (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT/* || lexer.token == Symbol.IDENT*/){
+				// System.out.println("Ta no while");
 				param_decl_list();
 			}
 
@@ -342,6 +346,12 @@ public class Compiler {
 
 			if (lexer.token == Symbol.LPAR){
 				call_expr();	//call_expr -> id ( {expr_list} )
+
+				if (lexer.token != Symbol.SEMICOLON) {
+					error.signal("Faltou ;");
+				}
+
+				lexer.nextToken();
 			}
 			else if (lexer.token == Symbol.ASSIGN){
 				assign_stmt();	//assign_stmt -> assign_expr ;
@@ -374,8 +384,11 @@ public class Compiler {
 	// assign_stmt -> assign_expr ;
 	public void assign_stmt(){
 		assign_expr();
-		if (lexer.token != Symbol.SEMICOLON)
+
+		if (lexer.token != Symbol.SEMICOLON){
 			error.signal("Faltou ;");
+		}
+
 		lexer.nextToken();
 	}
 
@@ -389,59 +402,81 @@ public class Compiler {
 
 	// read_stmt -> READ ( id_list );
 	public void read_stmt(){
-		if (lexer.token != Symbol.READ)
+		if (lexer.token != Symbol.READ){
 			error.signal("Faltou READ");
+		}
+
 		lexer.nextToken();
 
-		if (lexer.token != Symbol.LPAR)
+		if (lexer.token != Symbol.LPAR){
 			error.signal("Faltou (");
+		}
+
 		lexer.nextToken();
 
-		if (lexer.token != Symbol.IDENT)
-			error.signal("Faltou variavel");
+		// if (lexer.token != Symbol.IDENT){
+		// 	error.signal("Faltou variavel");
+		// }
+
 		id_list();
 
-		if (lexer.token != Symbol.RPAR)
+		if (lexer.token != Symbol.RPAR){
 			error.signal("Faltou )");
+		}
+
 		lexer.nextToken();
 
-		if (lexer.token != Symbol.SEMICOLON)
+		if (lexer.token != Symbol.SEMICOLON){
 			error.signal("Faltou ;");
+		}
+
 		lexer.nextToken();
 	}
 
 	// write_stmt -> WRITE ( id_list );
 	public void write_stmt(){
-		if (lexer.token != Symbol.WRITE)
+		if (lexer.token != Symbol.WRITE){
 			error.signal("Faltou WRITE");
+		}
+
 		lexer.nextToken();
 
-		if (lexer.token != Symbol.LPAR)
+		if (lexer.token != Symbol.LPAR){
 			error.signal("Faltou (");
+		}
+
 		lexer.nextToken();
 
-		if (lexer.token != Symbol.IDENT)
-			error.signal("Faltou variavel");
+		// if (lexer.token != Symbol.IDENT)
+		// 	error.signal("Faltou variavel");
 		id_list();
 
-		if (lexer.token != Symbol.RPAR)
+		if (lexer.token != Symbol.RPAR){
 			error.signal("Faltou )");
+		}
+
 		lexer.nextToken();
 
-		if (lexer.token != Symbol.SEMICOLON)
+		if (lexer.token != Symbol.SEMICOLON){
 			error.signal("Faltou ;");
+		}
+
 		lexer.nextToken();
 	}
 
 	// return_stmt -> RETURN expr ;
 	public void return_stmt(){
-		if (lexer.token != Symbol.RETURN)
+		if (lexer.token != Symbol.RETURN){
 			error.signal("Faltou RETURN");
+		}
+
 		lexer.nextToken();
 		expr();
 
-		if (lexer.token != Symbol.SEMICOLON)
+		if (lexer.token != Symbol.SEMICOLON){
 			error.signal("Faltou ;");
+		}
+
 		lexer.nextToken();
 	}
 
@@ -458,6 +493,8 @@ public class Compiler {
 
 	// expr_tail -> addop factor expr_tail | empty
 	public void expr_tail(){
+		// System.out.println("blaa");
+		System.out.println("TOKEN = " + lexer.token);
 		if (lexer.token == Symbol.PLUS || lexer.token == Symbol.MINUS){
 			addop();
 			factor();
@@ -474,6 +511,7 @@ public class Compiler {
 	// factor_tail -> mulop postfix_expr factor_tail | empty
 	public void factor_tail(){
 		if (lexer.token == Symbol.MULT || lexer.token == Symbol.DIV){
+			System.out.println("MULOP()");
 			mulop();
 			postfix_expr();
 			factor_tail();
@@ -481,14 +519,20 @@ public class Compiler {
 	}
 
 	// postfix_expr -> primary | id call_expr
+
+	// primary -> (expr) | id | INTLITERAL | FLOATLITERAL
 	public void postfix_expr(){
 		if (lexer.token == Symbol.LPAR || lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL){
 			primary();
 		}
-		else if (lexer.token == Symbol.IDENT)
+		else if (lexer.token == Symbol.IDENT){
+			System.out.println("IDENT no postfix_expr()");
 			id();
-			if (lexer.token == Symbol.LPAR)
+
+			if (lexer.token == Symbol.LPAR){
 				call_expr();
+			}
+		}
 	}
 
 	// call_expr -> ( {expr_list} ) (LER ID ANTES DE CHAMAR A FUNÇÃO)
@@ -499,7 +543,7 @@ public class Compiler {
 
 		lexer.nextToken();
 
-		while (lexer.token == Symbol.LPAR || lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL || lexer.token == Symbol.IDENT){
+		while (/*lexer.token == Symbol.LPAR || */lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL || lexer.token == Symbol.IDENT){
 			expr_list();
 		}
 
@@ -543,31 +587,32 @@ public class Compiler {
 			id();
 		}
 		else if(lexer.token == Symbol.INTLITERAL){
-			// O que fazer se for INTLITERAL?
+			lexer.nextToken();
 		}
 		else{
-			// O que fazer se for FLOATLITERAL?
+			lexer.nextToken();
 		}
 	}
 
 	// addop -> + | -
 	public void addop(){
-		if (lexer.token == Symbol.PLUS ||  lexer.token == Symbol.MINUS){
+		System.out.println("entrou no addop()");
+		if (lexer.token == Symbol.PLUS || lexer.token == Symbol.MINUS){
 			lexer.nextToken();
 		}
-		else{
-			error.signal("Faltou + ou -");
-		}
+		// else{
+		// 	lexer.nextToken();
+		// }
 	}
 
 	// mulop -> * | /
 	public void mulop(){
-		if (lexer.token == Symbol.MULT ||  lexer.token == Symbol.DIV){
+		if (lexer.token == Symbol.MULT || lexer.token == Symbol.DIV){
 			lexer.nextToken();
 		}
-		else{
-			error.signal("Faltou / ou *");
-		}
+		// else{
+		// 	lexer.nextToken();
+		// }
 	}
 
 
@@ -586,7 +631,7 @@ public class Compiler {
 		if (lexer.token != Symbol.LPAR){
 			error.signal("Faltou (");
 		}
-	
+
 		lexer.nextToken();
 		cond();
 
@@ -614,7 +659,7 @@ public class Compiler {
 	public void else_part(){
 		// Se tiver else, anda e chama stmt_list
 		if (lexer.token == Symbol.ELSE){
-			lexer.nextToken();	
+			lexer.nextToken();
 			stmt_list();
 		}
 	}
