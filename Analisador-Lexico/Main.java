@@ -6,6 +6,11 @@ public class Main {
         File file;
         FileReader stream;
         int numChRead;
+
+        // Flag
+        // true imprime erros do java
+        // false não imprime erros do java, somente erros da little
+        boolean DEBUG = false;
         
         if ( args.length != 1 ) 
             System.out.println("Use only one parameter, the file to be compiled");
@@ -45,9 +50,18 @@ public class Main {
                 
 
             Compiler compiler = new Compiler();
-        
-            compiler.compile(input);
+            
+            if (!DEBUG){
+                try {
+                    compiler.compile(input);
+                } catch (RuntimeException e){
+                    return;
+                }
             }
+            else {
+                compiler.compile(input);
+            }
+        }
     }
 }
         
