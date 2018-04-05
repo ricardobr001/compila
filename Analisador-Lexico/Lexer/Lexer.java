@@ -1,15 +1,3 @@
-/*
- Program ::= 'begin' VarDecList ';' AssignStatment 'end'
- VarDecList ::= Variable | Variable ',' VarDecList
- Variable ::= Letter {Letter}
- Letter ::= 'A' | 'B' | ... | 'Z' | 'a' | ... |'z'
- AssignStatment ::= Variable '=' Expr ';'
- Expr ::= Oper  Expr Expr  | Number
- Oper ::= '+' | '-' | '*' | '/'
- Number ::= Digit {Digit}
- Digit ::= '0'| '1' | ... | '9'
- */
-
 package Lexer;
 
 import java.util.*;
@@ -135,12 +123,14 @@ public class Lexer {
 		}
 
 		// Verifica se é string
-		else {
+		else {	
 			// Enquanto for letra, anda o token e armazena na string aux
 			while(Character.isLetter(input[tokenPos])){
 				aux = aux + input[tokenPos];
 				tokenPos++;
 			}
+			//System.out.println("STRING LIDA = " + aux);	
+			//System.out.println("TOKEN ="+ input[tokenPos] + input[tokenPos+1]+input[tokenPos+2]);
 
 			// Se o conteudo não for vazio, pode ser uma palavra reservada ou ident
 			if (!aux.equals("")){
@@ -213,9 +203,6 @@ public class Lexer {
 						aux = aux + input[tokenPos];
 						tokenPos++;
 					}
-
-					
-					//System.out.println("STRING LIDA = " + aux);	
 
 					// Valida a string aux
 					if (validStringLiteral(aux)){

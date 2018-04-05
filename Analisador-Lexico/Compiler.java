@@ -171,7 +171,13 @@ public class Compiler {
 
 	// var_type -> FLOAT | INT
 	public void var_type(){
-		if (lexer.token != Symbol.FLOAT && lexer.token != Symbol.INT){
+		if (lexer.token == Symbol.FLOAT){
+			lexer.nextToken();
+		}
+		else if (lexer.token == Symbol.INT){
+			lexer.nextToken();
+		}
+		else{
 			error.signal("tipo de variavel incorreto");
 		}
 	}
