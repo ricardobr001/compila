@@ -133,7 +133,8 @@ public class Lexer {
 				token = Symbol.INTLITERAL;
 			}
 		}
-		//Verifica se é string
+
+		// Verifica se é string
 		else {
 			// Enquanto for letra, anda o token e armazena na string aux
 			while(Character.isLetter(input[tokenPos])){
@@ -141,62 +142,87 @@ public class Lexer {
 				tokenPos++;
 			}
 
-			// Se a string aux não for vazia
+			// Se o conteudo não for vazio, pode ser uma palavra reservada ou ident
 			if (!aux.equals("")){
-				Symbol temp;
-				temp = keywordsTable.get(aux);
+				// Verificamos se o conteudo está na tabela hash
+				Symbol temp = keywordsTable.get(aux);
 
-				//se nao for palavra reservada, é nome de variavel (Duvida: entao nome de variavel nao pode ter numero?)
-				// Acredito que possa ser ou um IDENT ou STRINGLITERAL
-				// O IDENT pode ter no máximo tamanho 30, com o '\0', tamanho 31
-				// A STRINGLITERAL 80, incluindo o '\0', logo a STRINGLITERAL entre as aspas, tem tamanho 81 no máximo 
-				// Pois 80 - 1 = 79
-				// 79 + as duas aspas = 81
-				if (temp == null){
-					// Se começar com \", é uma string literal
-					if (aux.charAt(0) == '\"'){
-						// Se for maior que 81, a string literal tem tamanho maior que 80
-						if (aux.length() > 81){
-							error.signal("String maior que 79 caracteres");
-						}
-
-						// Se o ultimo caracter não for uma '"'
-						else if (aux.charAt(aux.length() - 1) != '\"'){
-							error.signal("A string precisa estar entre aspas duplas");
-						}
-
-						token = Symbol.STRINGLITERAL;
-					}
-
-					// Se não começa com '\"', é um ident
-					else {
-						// Precisa começar com uma letra
-						if (Character.isLetter(aux.charAt(0))){
-							// Se for maior que 30, é um identificador invalido
-							if (aux.length() > 30){
-								error.signal("A variavel precisa ter um tamanho maximo de 30 caracteres");
-							}
-
-							// Se saio do laço e é menor que 30, pode ser um caracter invalido na ultima posição
-							else if (containsOnlyNumbersAndDigits(aux)){
-								error.signal("Nome de variavel invalido, encontrado caractere invalido em \'" + aux + "\'");
-							}
-
-							token = Symbol.IDENT;
-							stringValue = aux;
-						}
-						else{
-							error.signal("O nome da variavel precisa começar com uma letra, encontrado caractere invalido em \'" + aux + "\'");
-						}						
-					}					
-				}
-
-				// Caso esteja na tabela Hash
-				else {
-					// O token toma o valor do que foi encontrado na tabela hash
+				// Se estiver na tabela hash
+				if (temp != null){
+					// O token toma o valor encontrado na tabela
 					token = temp;
 				}
+
+				// Pode ser um ident
+				else {
+					// Enquanto for letra ou digito, continua lendo para a string aux
+					while (Character.isLetterOrDigit(input[tokenPos])){
+						aux = aux + input[tokenPos];
+						tokenPos++;
+					}
+
+					// Se o ident lido for válido
+					if (validIdent(aux)){
+						token = Symbol.IDENT;
+						stringValue = aux;
+					}
+				}
 			}
+			// Pode ser stringliteral ou simbolo, a string aux aqui com certeza sera vazia
+			else {
+				// Se não for uma aspas, é um simbolo
+				if (input[tokenPos] != '\"'){
+					// Como temos apenas um simbolo reservado tem dois caracteres, adicionamos o primeiro
+					aux = aux + input[tokenPos];
+					tokenPos++;
+
+					// Verificando se o simbolo está na tabela hash
+					Symbol temp = keywordsTable.get(aux);
+
+					// Se ele estiver na tabela
+					if (temp != null){
+						token = temp;
+					}
+
+					// Se ele não estiver, pode ser o simbolo ASSIGN ":=", adicionamos o próximo simbolo a string aux
+					else {
+						aux = aux + input[tokenPos];
+						tokenPos++;
+
+						// Verificando se o simbolo está na tabela hash
+						temp = keywordsTable.get(aux);
+
+						// Se ele estiver na tabela
+						if (temp != null){
+							token = temp;
+						}
+					}
+				}
+
+				// Caso contrário é stringliteral
+				else{
+					int aspas = 0;
+
+					// Enquanto não encontrar as duas aspas, popula a string aux
+					while (aspas < 2){
+						// Se encontrar uma aspas, soma no contador
+						if (input[tokenPos] == '\"'){
+							aspas++;
+						}
+						
+						aux = aux + input[tokenPos];
+						tokenPos++;
+					}
+
+					
+					//System.out.println("STRING LIDA = " + aux);	
+
+					// Valida a string aux
+					if (validStringLiteral(aux)){
+						token = Symbol.STRINGLITERAL;
+					}
+				}
+			}		
 		}
 
 		if (DEBUGLEXER)
@@ -258,6 +284,52 @@ public class Lexer {
 		}
 
 		return true;
+	}
+
+	// O IDENT pode ter no máximo tamanho 30, com o '\0', tamanho 31
+	private boolean validIdent(String str){
+		// Precisa começar com uma letra
+		if (Character.isLetter(str.charAt(0))){
+			// Se for maior que 30, é um identificador invalido
+			if (str.length() > 30){
+				error.signal("A variavel precisa ter um tamanho maximo de 29 caracteres");
+			}
+
+			// Se tiver algum valor diferente de numeros e digitos, gera um erro
+			else if (!containsOnlyNumbersAndDigits(str)){
+				error.signal("Nome de variavel invalido, encontrado caractere invalido em \'" + str + "\'");
+			}
+
+			token = Symbol.IDENT;
+			stringValue = str;
+		}
+		else{
+			error.signal("O nome da variavel precisa começar com uma letra, encontrado caractere invalido em \'" + str + "\'");
+		}
+
+		return true;
+	}
+
+	// A STRINGLITERAL 80, incluindo o '\0', logo a STRINGLITERAL entre as aspas, tem tamanho 81 no máximo 
+	// Pois 80 - 1 = 79
+	// 79 + as duas aspas = 81
+	private boolean validStringLiteral(String str){
+		// Se começar com \", é uma string literal
+		if (str.charAt(0) == '\"'){
+			// Se for maior que 81, a string literal tem tamanho maior que 80
+			if (str.length() > 81){
+				error.signal("String maior que 79 caracteres");
+			}
+
+			// Se o ultimo caracter não for uma '"'
+			else if (str.charAt(str.length() - 1) != '\"'){
+				error.signal("A string precisa estar entre aspas duplas");
+			}
+
+			return true;
+		}
+
+		return false;
 	}
 	
 	// Max ident size and max string size
