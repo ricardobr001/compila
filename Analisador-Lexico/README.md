@@ -13,7 +13,7 @@ Métodos concluídos da classe Compiler
 ### Global String Declaration
 - [x] string_decl_list
 - [x] string_decl
-- [x] str **TERMINAR/FAZER A VERIFICAÇÃO DOS 30 CARACTERES NO NEXTTOKEN()**
+- [x] str
 - [x] str_decl_tail
 
 ### Variable Declaration
@@ -71,7 +71,7 @@ Métodos concluídos da classe Compiler
 # Lexer
 Métodos concluídos da classe Lexer
 
-- [ ] nextToken
+- [x] nextToken **TERMINAR PARA DETECTAR FLOATLITERAL**
 
 # Correções
 stmt -> TODAS AS REGRAS ANTERIORES | call_expr ;<br/>

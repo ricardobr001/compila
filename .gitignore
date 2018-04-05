@@ -1,2 +1,3 @@
 *.class
-compila/Analisador-Lexico/testes
+compila/Analisador-Lexico/testes/
+compila/Analisador-Lexico/testes/*
