@@ -57,7 +57,7 @@ Métodos concluídos da classe Compiler
 - [x] call_expr
 - [x] expr_list
 - [x] expr_list_tail
-- [x] primary **DUVIDA**
+- [x] primary
 - [x] addop
 - [x] mulop
 
@@ -71,7 +71,7 @@ Métodos concluídos da classe Compiler
 # Lexer
 Métodos concluídos da classe Lexer
 
-- [x] nextToken **TERMINAR PARA DETECTAR FLOATLITERAL**
+- [x] nextToken
 
 # Correções
 stmt -> TODAS AS REGRAS ANTERIORES | call_expr ;<br/>

@@ -273,10 +273,8 @@ public class Compiler {
 			}
 
 			lexer.nextToken();
-			// System.out.println("Chamou o token");
 
 			while (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT/* || lexer.token == Symbol.IDENT*/){
-				// System.out.println("Ta no while");
 				param_decl_list();
 			}
 
@@ -394,8 +392,10 @@ public class Compiler {
 
 	// assign_expr -> := expr
 	public void assign_expr(){
-		if (lexer.token != Symbol.ASSIGN)
+		if (lexer.token != Symbol.ASSIGN){
 			error.signal("Faltou :=");
+		}
+		
 		lexer.nextToken();
 		expr();
 	}
@@ -493,8 +493,6 @@ public class Compiler {
 
 	// expr_tail -> addop factor expr_tail | empty
 	public void expr_tail(){
-		// System.out.println("blaa");
-		System.out.println("TOKEN = " + lexer.token);
 		if (lexer.token == Symbol.PLUS || lexer.token == Symbol.MINUS){
 			addop();
 			factor();
@@ -511,7 +509,6 @@ public class Compiler {
 	// factor_tail -> mulop postfix_expr factor_tail | empty
 	public void factor_tail(){
 		if (lexer.token == Symbol.MULT || lexer.token == Symbol.DIV){
-			System.out.println("MULOP()");
 			mulop();
 			postfix_expr();
 			factor_tail();
@@ -526,7 +523,6 @@ public class Compiler {
 			primary();
 		}
 		else if (lexer.token == Symbol.IDENT){
-			System.out.println("IDENT no postfix_expr()");
 			id();
 
 			if (lexer.token == Symbol.LPAR){
@@ -596,7 +592,6 @@ public class Compiler {
 
 	// addop -> + | -
 	public void addop(){
-		System.out.println("entrou no addop()");
 		if (lexer.token == Symbol.PLUS || lexer.token == Symbol.MINUS){
 			lexer.nextToken();
 		}
@@ -698,6 +693,7 @@ public class Compiler {
 
 		// Enquanto for declaração de variáveis no for, verifica as variáveis
 		while (lexer.token == Symbol.IDENT){
+			id();
 			assign_expr();
 		}
 

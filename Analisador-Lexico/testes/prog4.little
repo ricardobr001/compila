@@ -11,8 +11,8 @@ BEGIN
 		IF ( a > b ) THEN
 		    r := soma ( a , b );
 		ELSE
-			FOR ({i := 0}; {i < a}; {i := i + 1})
-				r := r b + ;
+			FOR (i := 0 ; i < a ; i := i + 1)
+				r := r + b ;
 			ENDFOR
 		ENDIF
 
@@ -22,6 +22,6 @@ BEGIN
 
     FUNCTION INT soma (INT x , INT y)
     BEGIN
-        RETURN x y + ;
+        RETURN x + y ;
     END
 END
