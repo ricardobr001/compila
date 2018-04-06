@@ -300,7 +300,7 @@ public class Lexer {
 		if (Character.isLetter(str.charAt(0))){
 			// Se for maior que 30, é um identificador invalido
 			if (str.length() > 30){
-				error.signal("A variavel precisa ter um tamanho maximo de 29 caracteres");
+				error.signal("A variavel precisa ter um tamanho maximo de 30 caracteres");
 			}
 
 			// Se tiver algum valor diferente de numeros e digitos, gera um erro

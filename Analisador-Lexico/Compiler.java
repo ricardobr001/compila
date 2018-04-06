@@ -274,7 +274,7 @@ public class Compiler {
 
 			lexer.nextToken();
 
-			while (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT/* || lexer.token == Symbol.IDENT*/){
+			while (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
 				param_decl_list();
 			}
 
