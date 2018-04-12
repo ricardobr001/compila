@@ -1,5 +1,7 @@
 import Lexer.*;
 import Error.*;
+import AST.*;
+import java.util.*;
 
 public class Compiler {
 	// para geracao de codigo
@@ -7,15 +9,17 @@ public class Compiler {
 	private Lexer lexer;
     private CompilerError error;
 
-    public void compile( char []p_input ) {
+    public PgmBody compile( char []p_input ) {
 		error = new CompilerError(null);
 		lexer = new Lexer(p_input, error);
 		error.setLexer(lexer);
         lexer.nextToken();
-        program();
+        PgmBody pg = program();
 
         if (lexer.token != Symbol.EOF)
 			error.signal("nao chegou no fim do arq");
+
+		return pg;
     }
 
 	/* =================================================*/
@@ -23,7 +27,7 @@ public class Compiler {
 	/* =================================================*/
 
     // Program -> 'PROGRAM' id 'BEGIN' pgm_body 'END'
-    public void program(){
+    public PgmBody program(){
 		// Verifica se começou com a palavra PROGRAM
 		if (lexer.token != Symbol.PROGRAM){
 			error.signal("faltou PROGRAM");
@@ -38,7 +42,7 @@ public class Compiler {
 		}
 
 		lexer.nextToken();
-		pgm_body();
+		PgmBody pg = pgm_body();
 
 		// Verifica se tem a palavra END depois do pgm_body
 		if (lexer.token != Symbol.END){
@@ -46,32 +50,39 @@ public class Compiler {
 		}
 
 		lexer.nextToken();
+
+		return pg;
 	}
 
 	// id -> IDENT
-	public void id(){
+	public String id(){
 		// Verifica se é um IDENTIFICADOR
 		if (lexer.token != Symbol.IDENT){
 			error.signal("Identificador não encontrado");
 		}
 
+		String var = lexer.getStringValue();
 		lexer.nextToken();
+
+		return var;
 	}
 
 	// pgm_body -> decl func_declarations
-	public void pgm_body(){
-		decl();
+	public PgmBody pgm_body(){
+		ArrayList<Variable> var = new ArrayList<Variable>();
+		decl(var);
 		func_declarations();
+		return new PgmBody(var);
 	}
 
 	// decl -> string_decl_list {decl} | var_decl_list {decl} | empty
-	public void decl(){
+	public void decl(ArrayList<Variable> var){
 		// Verifica se é uma string
 		if (lexer.token == Symbol.STRING){
-			string_decl_list();
+			string_decl_list(var);
 
 			if (lexer.token == Symbol.STRING || lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
-				decl();
+				decl(var);
 			}
 		}
 		// Verifica se é uma variável
@@ -79,7 +90,7 @@ public class Compiler {
 			var_decl_list();
 
 			if (lexer.token == Symbol.STRING || lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
-				decl();
+				decl(var);
 			}
 		}
 	}
@@ -89,56 +100,64 @@ public class Compiler {
 	/* =================================================*/
 
 	// string_decl_list -> string_decl {string_decl_tail}
-	public void string_decl_list(){
+	public void string_decl_list(ArrayList<Variable> var){
 		// Verifica se é uma string
 		if (lexer.token == Symbol.STRING){
-			string_decl();
+			var.add(string_decl());
 
 			if (lexer.token == Symbol.STRING){
-				string_decl_tail();
+				string_decl_tail(var);
 			}
 		}
 	}
 
 	// string_decl -> STRING id := str ; | empty
-	public void string_decl(){
+	public Variable string_decl(){
 		// Verifica se é a palavra STRING
 		if (lexer.token == Symbol.STRING){
 			lexer.nextToken();
-			id();
+
+			// new Variable(nome, tipo, valor)
+			Variable var = new Variable(id(), Symbol.STRING, null);
 
 			if (lexer.token != Symbol.ASSIGN){
 				error.signal("faltou :=");
 			}
 
 			lexer.nextToken();
-			str();
+			var.setValor(str());	// Seta o valor no objeto Variable
 
 			if (lexer.token != Symbol.SEMICOLON){
 				error.signal("faltou ;");
 			}
 
 			lexer.nextToken();
+			return var;
 		}
+		return null;
 	}
 
 	// str -> STRINGLITERAL
-	public void str(){
+	public String str(){
 
 		if (lexer.token == Symbol.STRINGLITERAL){
+			String str = lexer.getStringValue();
 			lexer.nextToken();
+			return str;
 		}
 		else {
 			error.signal("erro na string");
 		}
+
+		return null;
 	}
 
 	// str_decl_tail -> string_decl {string_decl_tail}
-	public void string_decl_tail(){
-		string_decl();
+	public void string_decl_tail(ArrayList<Variable> var){
+		var.add(string_decl());
 
 		if (lexer.token == Symbol.STRING){
-			string_decl_tail();
+			string_decl_tail(var);
 		}
 	}
 
@@ -313,7 +332,8 @@ public class Compiler {
 
 	// func_body -> decl stmt_list
 	public void func_body(){
-		decl();
+		ArrayList<Variable> var = new ArrayList<Variable>();
+		decl(var);
 		stmt_list();
 	}
 
@@ -395,7 +415,7 @@ public class Compiler {
 		if (lexer.token != Symbol.ASSIGN){
 			error.signal("Faltou :=");
 		}
-		
+
 		lexer.nextToken();
 		expr();
 	}

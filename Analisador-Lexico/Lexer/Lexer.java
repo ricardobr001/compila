@@ -6,7 +6,7 @@ import Error.*;
 public class Lexer {
 
 	// apenas para verificacao lexica
-	public static final boolean DEBUGLEXER = true;
+	public static final boolean DEBUGLEXER = false;
 
     public Lexer( char []input, CompilerError error ) {
         this.input = input;
