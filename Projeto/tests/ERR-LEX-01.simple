@@ -1,0 +1,8 @@
+PROGRAM nomedoprograma
+BEGIN
+    FUNCTION VOID main()
+    BEGIN
+        STRING texto := "hello world, string maior que 79 caracteres, pois inclui o \0 entao isso eh um teste!" ;
+        WRITE ( texto );
+    END
+END

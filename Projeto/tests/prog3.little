@@ -1,0 +1,18 @@
+PROGRAM nomedoprograma
+BEGIN
+    FUNCTION VOID main()
+    BEGIN
+        INT a , b , r ;
+
+        READ ( a , b );
+
+        r := soma ( a , b );
+
+        WRITE ( r );
+    END
+
+    FUNCTION INT soma (INT x , INT y)
+    BEGIN
+        RETURN x + y ;
+    END
+END

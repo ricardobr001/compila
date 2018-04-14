@@ -1,0 +1,8 @@
+PROGRAM nomedoprograma
+BEGIN
+    FUNCTION VOID main()
+    BEGIN
+        STRING variavelComMaisde30caracteresTeste := "hello world!" ;
+        WRITE ( texto );
+    END
+END
