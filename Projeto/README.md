@@ -85,16 +85,16 @@ Métodos concluídos da classe Lexer
 # AST
 Objetos criados no pacote AST
 
-- [x] Variable `atributo`</br>
+- [x] Variable
 - [x] PgmBody
-    - [x] Function `atributo`
-        - [x] FunctionBody `atributo`</br>
+    - [x] Function `atributo /\`
+        - [x] FunctionBody `atributo /\`
     - [x] Statement
-        - [x] AssignStatement `extends`<br/>
-        - [x] Expr `abstract`
-            - [x] CompositeExpr `extends`
-            - [x] VariableExpr `extends`
-            - [x] IntNumberExpr `extends`
+        - [x] AssignStatement `extends /\`
+- [x] Expr `abstract | atributo Statement`
+    - [x] CompositeExpr `extends`
+    - [x] VariableExpr `extends`
+    - [x] IntNumberExpr `extends`
     
 
 # Correções
