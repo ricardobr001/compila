@@ -36,4 +36,16 @@ public class PW {
         out.print(space.substring(0, currentIndent));
         out.println(s);
     }
+
+    public void printI(){
+        out.print(space.substring(0, currentIndent));
+    }
+
+    public void printNI(String s){
+        out.print(s);
+    }
+
+    public void printBL(){
+        out.println("");
+    }
 }

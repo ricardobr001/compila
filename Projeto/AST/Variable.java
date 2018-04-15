@@ -43,4 +43,8 @@ public class Variable {
     public String getVar(){
         return this.var;
     }
+
+    public Symbol getTipo(){
+        return this.tipo;
+    }
 }

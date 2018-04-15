@@ -70,9 +70,10 @@ public class Compiler {
 	// pgm_body -> decl func_declarations
 	public PgmBody pgm_body(){
 		ArrayList<Variable> var = new ArrayList<Variable>();
+		ArrayList<Function> func = new ArrayList<Function>();
 		decl(var);
-		func_declarations();
-		return new PgmBody(var);
+		func_declarations(func);
+		return new PgmBody(var, func);
 	}
 
 	// decl -> string_decl_list {decl} | var_decl_list {decl} | empty
@@ -206,15 +207,16 @@ public class Compiler {
 	}
 
 	// any_type -> var_type | VOID
-	public void any_type(){
+	public Symbol any_type(){
 		// Se não for VOID, chama o var_type
 		if (lexer.token != Symbol.VOID){
-			var_type();
+			return var_type();
 		}
 
 		// Então é VOID
 		else {
 			lexer.nextToken();
+			return Symbol.VOID;
 		}
 	}
 
@@ -248,24 +250,25 @@ public class Compiler {
 	/* =================================================*/
 
 	// param_decl_list -> param_decl param_decl_tail
-	public void param_decl_list(){
-		param_decl();
-		param_decl_tail();
+	public void param_decl_list(ArrayList<Variable> var){
+		var.add(param_decl());
+		param_decl_tail(var);
 	}
 
 	// param_decl -> var_type id
-	public void param_decl(){
-		var_type();
-		id();
+	public Variable param_decl(){
+		Variable var = new Variable(null, var_type(), null);
+		var.setVar(id());
+		return var;
 	}
 
 	// param_decl_tail -> , param_decl param_decl_tail | empty
-	public void param_decl_tail(){
+	public void param_decl_tail(ArrayList<Variable> var){
 		// Verifica se é uma virgula
 		if (lexer.token == Symbol.COMMA){
 			lexer.nextToken();
-			param_decl();
-			param_decl_tail();
+			var.add(param_decl());
+			param_decl_tail(var);
 		}
 	}
 
@@ -274,21 +277,21 @@ public class Compiler {
 	/* =================================================*/
 
 	// func_declarations -> func_decl {func_decl_tail}
-	public void func_declarations(){
-		func_decl();
+	public void func_declarations(ArrayList<Function> func){
+		func.add(func_decl());
 
 		if (lexer.token == Symbol.FUNCTION){
-			func_decl_tail();
+			func_decl_tail(func);
 		}
 	}
 
 	// func_decl -> FUNCTION any_type id ({param_decl_list}) BEGIN func_body END | empty
-	public void func_decl(){
+	public Function func_decl(){
 		// Verifica se tem o FUNCTION
 		if (lexer.token == Symbol.FUNCTION){
 			lexer.nextToken();
-			any_type();
-			id();
+			Function func = new Function(any_type(), id(), null);
+			//id();
 
 			// Verifica se tem o '(' depois do function
 			if (lexer.token != Symbol.LPAR){
@@ -297,9 +300,11 @@ public class Compiler {
 
 			lexer.nextToken();
 
+			ArrayList<Variable> var = new ArrayList<Variable>();
 			while (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
-				param_decl_list();
+				param_decl_list(var);
 			}
+			func.setParametros(var);
 
 			// Verifica se tem o ')' depois do param_decl_list
 			if (lexer.token != Symbol.RPAR){
@@ -314,7 +319,7 @@ public class Compiler {
 			}
 
 			lexer.nextToken();
-			func_body();
+			func.setCorpo(func_body());
 
 			// Verifica se tem a palavra END depois do func_body
 			if (lexer.token != Symbol.END){
@@ -322,23 +327,29 @@ public class Compiler {
 			}
 
 			lexer.nextToken();
+			return func;
 		}
+
+		return null;
 	}
 
 	// func_decl_tail -> func_decl {func_decl_tail}
-	public void func_decl_tail(){
-		func_decl();
+	public void func_decl_tail(ArrayList<Function> func){
+		func.add(func_decl());
 
 		if (lexer.token == Symbol.FUNCTION){
-			func_decl_tail();
+			func_decl_tail(func);
 		}
 	}
 
 	// func_body -> decl stmt_list
-	public void func_body(){
+	public FunctionBody func_body(){
 		ArrayList<Variable> var = new ArrayList<Variable>();
+		ArrayList<Statement> statement = new ArrayList<Statement>();
 		decl(var);
-		stmt_list();
+		stmt_list(statement);
+
+		return new FunctionBody(var, statement);
 	}
 
 	/* =================================================*/
@@ -346,28 +357,29 @@ public class Compiler {
 	/* =================================================*/
 
 	// stmt_list -> stmt stmt_tail | empty
-	public void stmt_list(){
+	public void stmt_list(ArrayList<Statement> statement){
 		if (lexer.token == Symbol.IDENT || lexer.token == Symbol.READ || lexer.token == Symbol.WRITE || lexer.token == Symbol.RETURN || lexer.token == Symbol.IF || lexer.token == Symbol.FOR){
-			stmt();
-			stmt_tail();
+			statement.add(stmt());
+			stmt_tail(statement);
 		}
 	}
 
 	// stmt_tail -> stmt stmt_tail | empty
-	public void stmt_tail(){
+	public void stmt_tail(ArrayList<Statement> statement){
 		if (lexer.token == Symbol.IDENT || lexer.token == Symbol.READ || lexer.token == Symbol.WRITE || lexer.token == Symbol.RETURN || lexer.token == Symbol.IF || lexer.token == Symbol.FOR){
-			stmt();
-			stmt_tail();
+			statement.add(stmt());
+			stmt_tail(statement);
 		}
 	}
 
 	// stmt -> id assign_stmt | read_stmt | write_stmt | return_stmt | if_stmt | for_stmt | id call_expr ;
-	public void stmt(){
+	public Statement stmt(){
 		if (lexer.token == Symbol.IDENT){
-			id();
+			String temp = id();
 
 			if (lexer.token == Symbol.LPAR){
-				call_expr();	//call_expr -> id ( {expr_list} )
+				CompositeExpr expression = new CompositeExpr(null, null, null);
+				call_expr(expression);	//call_expr -> id ( {expr_list} )
 
 				if (lexer.token != Symbol.SEMICOLON) {
 					error.signal("Faltou ;");
@@ -376,8 +388,11 @@ public class Compiler {
 				lexer.nextToken();
 			}
 			else if (lexer.token == Symbol.ASSIGN){
-				assign_stmt();	//assign_stmt -> assign_expr ;
-			}					//assign_expr -> id := expr
+				Statement statement = new AssignStatement(new Variable(temp, null, null), null);
+
+				assign_stmt(statement);		//assign_stmt -> assign_expr ;
+				return statement;
+			}								//assign_expr -> id := expr
 			else{
 				error.signal("Faltou := ou (");
 			}
@@ -397,6 +412,8 @@ public class Compiler {
 		else if (lexer.token == Symbol.FOR){
 			for_stmt();
 		}
+
+		return null;
 	}
 
 	/* =================================================*/
@@ -404,8 +421,8 @@ public class Compiler {
 	/* =================================================*/
 
 	// assign_stmt -> assign_expr ;
-	public void assign_stmt(){
-		assign_expr();
+	public void assign_stmt(Statement statement){
+		statement.setExpr(assign_expr());
 
 		if (lexer.token != Symbol.SEMICOLON){
 			error.signal("Faltou ;");
@@ -415,13 +432,16 @@ public class Compiler {
 	}
 
 	// assign_expr -> := expr
-	public void assign_expr(){
+	public CompositeExpr assign_expr(){
 		if (lexer.token != Symbol.ASSIGN){
 			error.signal("Faltou :=");
 		}
 
 		lexer.nextToken();
-		expr();
+
+		CompositeExpr expression = new CompositeExpr(null, null, null);
+		expr(expression);
+		return expression;
 	}
 
 	// read_stmt -> READ ( id_list );
@@ -499,7 +519,8 @@ public class Compiler {
 		}
 
 		lexer.nextToken();
-		expr();
+		CompositeExpr expression = new CompositeExpr(null, null, null);
+		expr(expression);
 
 		if (lexer.token != Symbol.SEMICOLON){
 			error.signal("Faltou ;");
@@ -514,23 +535,24 @@ public class Compiler {
 	/* =================================================*/
 
 	// expr -> factor expr_tail
-	public void expr(){
-		factor();
-		expr_tail();
+	public void expr(CompositeExpr expression){
+		factor(expression);
+		expr_tail(expression);
 	}
 
 	// expr_tail -> addop factor expr_tail | empty
-	public void expr_tail(){
+	public void expr_tail(CompositeExpr expression){
 		if (lexer.token == Symbol.PLUS || lexer.token == Symbol.MINUS){
-			addop();
-			factor();
-			expr_tail();
+			addop(expression);
+			expression.setDireita(new CompositeExpr(null, null, null));
+			factor((CompositeExpr) expression.getDireita());
+			expr_tail((CompositeExpr) expression.getDireita());
 		}
 	}
 
 	// factor -> postfix_expr factor_tail
-	public void factor(){
-		postfix_expr();
+	public void factor(CompositeExpr expression){
+		postfix_expr(expression);
 		factor_tail();
 	}
 
@@ -538,7 +560,7 @@ public class Compiler {
 	public void factor_tail(){
 		if (lexer.token == Symbol.MULT || lexer.token == Symbol.DIV){
 			mulop();
-			postfix_expr();
+			postfix_expr(new CompositeExpr(null, null, null));
 			factor_tail();
 		}
 	}
@@ -546,29 +568,30 @@ public class Compiler {
 	// postfix_expr -> primary | id call_expr
 
 	// primary -> (expr) | id | INTLITERAL | FLOATLITERAL
-	public void postfix_expr(){
+	public void postfix_expr(CompositeExpr expression){
 		if (lexer.token == Symbol.LPAR || lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL){
 			primary();
 		}
 		else if (lexer.token == Symbol.IDENT){
-			id();
+			Variable var = new Variable(id(), null, null);
+			expression.setEsquerda(new VariableExpr(var));
 
 			if (lexer.token == Symbol.LPAR){
-				call_expr();
+				call_expr(expression);
 			}
 		}
 	}
 
 	// call_expr -> ( {expr_list} ) (LER ID ANTES DE CHAMAR A FUNÇÃO)
-	public void call_expr(){
+	public void call_expr(CompositeExpr expression){
 		if (lexer.token != Symbol.LPAR){
 			error.signal("Faltou (");
 		}
 
 		lexer.nextToken();
 
-		while (/*lexer.token == Symbol.LPAR || */lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL || lexer.token == Symbol.IDENT){
-			expr_list();
+		while (lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL || lexer.token == Symbol.IDENT){
+			expr_list(expression);
 		}
 
 		if (lexer.token != Symbol.RPAR){
@@ -579,18 +602,18 @@ public class Compiler {
 	}
 
 	// expr_list -> expr expr_list_tail
-	public void expr_list(){
-		expr();
-		expr_list_tail();
+	public void expr_list(CompositeExpr expression){
+		expr(expression);
+		expr_list_tail(expression);
 	}
 
 	// expr_list_tail -> , expr expr_list_tail | empty
-	public void expr_list_tail(){
+	public void expr_list_tail(CompositeExpr expression){
 		// Se for uma virgula, chama expr e expr_list_tail
 		if (lexer.token == Symbol.COMMA){
 			lexer.nextToken();
-			expr();
-			expr_list_tail();
+			expr(expression);
+			expr_list_tail(expression);
 		}
 	}
 
@@ -599,7 +622,7 @@ public class Compiler {
 		// Se for um '(', anda e chama expr e verifica se tem ')'
 		if (lexer.token == Symbol.LPAR){
 			lexer.nextToken();
-			expr();
+			expr(new CompositeExpr(null, null, null));
 
 			if (lexer.token != Symbol.RPAR){
 				error.signal("Faltou )");
@@ -619,13 +642,19 @@ public class Compiler {
 	}
 
 	// addop -> + | -
-	public void addop(){
-		if (lexer.token == Symbol.PLUS || lexer.token == Symbol.MINUS){
+	public void addop(CompositeExpr e){
+		if (lexer.token == Symbol.PLUS){
 			lexer.nextToken();
+			e.setOperador(Symbol.PLUS);
+		}
+		else if (lexer.token == Symbol.MINUS){
+			lexer.nextToken();
+			e.setOperador(Symbol.MINUS);
 		}
 		// else{
 		// 	lexer.nextToken();
 		// }
+
 	}
 
 	// mulop -> * | /
@@ -669,7 +698,7 @@ public class Compiler {
 		}
 
 		lexer.nextToken();
-		stmt_list();
+		stmt_list(new ArrayList<Statement>());
 		else_part();
 
 		if (lexer.token != Symbol.ENDIF){
@@ -683,15 +712,15 @@ public class Compiler {
 		// Se tiver else, anda e chama stmt_list
 		if (lexer.token == Symbol.ELSE){
 			lexer.nextToken();
-			stmt_list();
+			stmt_list(new ArrayList<Statement>());
 		}
 	}
 
 	// cond -> expr compop expr
 	public void cond(){
-		expr();
+		expr(new CompositeExpr(null, null, null));
 		compop();
-		expr();
+		expr(new CompositeExpr(null, null, null));
 	}
 
 	// compop -> < | > | =
@@ -753,7 +782,7 @@ public class Compiler {
 		}
 
 		lexer.nextToken();
-		stmt_list();
+		stmt_list(new ArrayList<Statement>());
 
 		if (lexer.token != Symbol.ENDFOR){
 			error.signal("Faltou ENDFOR");
