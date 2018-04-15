@@ -46,17 +46,17 @@ Métodos concluídos da classe Compiler
 ### Statement List
 - [x] stmt_list `Terminar stmt`
 - [x] stmt_tail
-- [ ] stmt 
+- [x] stmt 
 
 ### Basic Statements
-- [x] assign_stmt **Dependendo da expressão, perdendo informação por sobreescrita, arrumar!**
-- [x] assign_expr **Dependendo da expressão, perdendo informação por sobreescrita, arrumar!**
+- [x] assign_stmt `Dependendo da expressão, perdendo informação por sobrescrita, arrumar!`
+- [x] assign_expr `Dependendo da expressão, perdendo informação por sobrescrita, arrumar!`
 - [x] read_stmt
 - [x] write_stmt
 - [x] return_stmt
 
 ### Expressions
-- [x] expr **Sobrescrevendo AQUI!**
+- [x] expr `Sobrescrevendo AQUI! (stmt comum)`
 - [x] expr_tail
 - [x] factor
 - [x] factor_tail
@@ -75,7 +75,7 @@ Métodos concluídos da classe Compiler
 - [x] else_part
 - [x] cond
 - [x] compop
-- [x] for_stmt **Problema de sobreescrita no cabeçalho do for caso tenha mais de uma condição, atribuição no inicio e fim**
+- [x] for_stmt `Problema de sobrescrita no cabeçalho do for caso tenha mais de uma condição, atribuição no inicio e fim (WHILE)`
 
 # Lexer
 Métodos concluídos da classe Lexer
@@ -86,7 +86,6 @@ Métodos concluídos da classe Lexer
 Objetos criados no pacote AST
 
 - [x] Variable
-<br/>
 - [x] PgmBody
     - [x] Function `atributo PgmBody`
         - [x] FunctionBody `atributo Function`
@@ -98,20 +97,17 @@ Objetos criados no pacote AST
         - [x] ElseStatement `extends Statement`
         - [x] ReturnStatement `extends Statement`
         - [x] ForStatement `extends Statement`
-<br/>
 - [x] Expr `abstract | atributo Statement`
     - [x] CompositeExpr `extends Expr`
     - [x] VariableExpr `extends Expr | atributo CompositeExpr`
     - [x] IntNumberExpr `extends Expr | atributo CompositeExpr`
     - [x] FloatNumberExpr `extends Expr | atributo CompositeExpr`
-<br/>
 - [x] IfBody `atributo IfStatement | ElseStatement`
 - [x] ForBody `atributo ForStatement`
-<br/>
 - [x] PW `PrintWriter`
 
 # Correções
-stmt -> TODAS AS REGRAS ANTERIORES | call_expr ;<br/>
+stmt -> `TODAS AS REGRAS ANTERIORES | call_expr ;`<br/>
 id call_expr -> ( {expr_list} ) `ID REMOVIDO DO call_expr`<br/>
 id assign_expr -> := expr `ID REMOVIDO DO assign_expr`<br/>
 
