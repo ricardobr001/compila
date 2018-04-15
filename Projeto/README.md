@@ -56,7 +56,7 @@ Métodos concluídos da classe Compiler
 - [x] return_stmt
 
 ### Expressions
-- [x] expr
+- [x] expr **Sobrescrevendo AQUI!**
 - [x] expr_tail
 - [x] factor
 - [x] factor_tail
