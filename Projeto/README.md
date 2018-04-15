@@ -11,9 +11,9 @@ Métodos concluídos da classe Compiler
     - [x] Variable
     - [x] Function
 - [x] decl
-    - [x] Variable<String>
-    - [x] Variable<FLOAT>
-    - [x] Variable<INT>
+    - [x] Variable `String`
+    - [x] Variable `FLOAT`
+    - [x] Variable `INT`
 
 ### Global String Declaration
 - [x] string_decl_list
@@ -44,7 +44,7 @@ Métodos concluídos da classe Compiler
     - [ ] stmt_list
 
 ### Statement List
-- [x] stmt_list **Terminar stmt**
+- [x] stmt_list `Terminar stmt`
 - [x] stmt_tail
 - [ ] stmt 
 
@@ -85,7 +85,17 @@ Métodos concluídos da classe Lexer
 # AST
 Objetos criados no pacote AST
 
-- [ ]
+- [x] Variable `atributo`</br>
+- [x] PgmBody
+    - [x] Function `atributo`
+        - [x] FunctionBody `atributo`</br>
+    - [x] Statement
+        - [x] AssignStatement `extends`<br/>
+        - [x] Expr `abstract`
+            - [x] CompositeExpr `extends`
+            - [x] VariableExpr `extends`
+            - [x] IntNumberExpr `extends`
+    
 
 # Correções
 stmt -> TODAS AS REGRAS ANTERIORES | call_expr ;<br/>
