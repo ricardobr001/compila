@@ -16,4 +16,9 @@ public class AssignStatement extends Statement{
 
         pw.printBL();   //Quebra de linha
     }
+
+    public void genCFOR(PW pw){
+        pw.printNI(super.getVar().getVar() + " = ");
+        super.getExpr().genC(pw);
+    }
 }

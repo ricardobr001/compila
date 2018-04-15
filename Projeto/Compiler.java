@@ -413,10 +413,14 @@ public class Compiler {
 			return statement;
 		}
 		else if (lexer.token == Symbol.IF){
-		 	if_stmt();
+			Statement statement = new IfStatement(null, new CompositeExpr(null, null, null));
+			if_stmt((IfStatement) statement);
+			return statement;
 		}
 		else if (lexer.token == Symbol.FOR){
-			for_stmt();
+			Statement statement = new ForStatement(null, new CompositeExpr(null, null, null));
+			for_stmt((ForStatement) statement);
+			return statement;
 		}
 
 		return null;
@@ -695,7 +699,7 @@ public class Compiler {
 	/* =================================================*/
 
 	// if_stmt -> IF ( cond ) THEN stmt_list else_part ENDIF
-	public void if_stmt(){
+	public void if_stmt(IfStatement statement){
 		if (lexer.token != Symbol.IF){
 			error.signal("Faltou IF");
 		}
@@ -707,7 +711,7 @@ public class Compiler {
 		}
 
 		lexer.nextToken();
-		cond();
+		cond(statement.getExpr());
 
 		if (lexer.token != Symbol.RPAR){
 			error.signal("Faltou )");
@@ -720,8 +724,9 @@ public class Compiler {
 		}
 
 		lexer.nextToken();
-		stmt_list(new ArrayList<Statement>());
-		else_part();
+		statement.setCorpo(new IfBody(new ArrayList<Statement>()));
+		stmt_list(statement.getCorpo().getArrayStmt());
+		else_part(statement);
 
 		if (lexer.token != Symbol.ENDIF){
 			error.signal("Faltou ENDIF");
@@ -730,26 +735,43 @@ public class Compiler {
 	}
 
 	// else_part -> ELSE stmt_list | empty
-	public void else_part(){
+	public void else_part(IfStatement statement){
 		// Se tiver else, anda e chama stmt_list
 		if (lexer.token == Symbol.ELSE){
 			lexer.nextToken();
-			stmt_list(new ArrayList<Statement>());
+			// Cria um objeto ElseStatement e seta no IfStatement Atual
+			statement.setCorpoElse(new ElseStatement(null, new CompositeExpr(null, null, null)));
+
+			// Cria um novo IfBody e seta no ElseStatement
+			statement.getCorpoElse().setCorpo(new IfBody(new ArrayList<Statement>()));
+
+			// Passa o arrayStmt do novo IfBody para o stmt_list
+			stmt_list(statement.getCorpoElse().getCorpo().getArrayStmt());
 		}
 	}
 
 	// cond -> expr compop expr
-	public void cond(){
-		expr(new CompositeExpr(null, null, null));
-		compop();
-		expr(new CompositeExpr(null, null, null));
+	public void cond(CompositeExpr expression){
+		expr(expression);
+		compop(expression);
+		expression.setDireita(new CompositeExpr(null, null, null));
+		expr((CompositeExpr) expression.getDireita());
 	}
 
 	// compop -> < | > | =
-	public void compop(){
+	public void compop(CompositeExpr expression){
 		// Verifica se é um dos simbolos, se for anda o token
-		if (lexer.token == Symbol.LT || lexer.token == Symbol.GT || lexer.token == Symbol.EQUAL){
+		if (lexer.token == Symbol.LT){
 			lexer.nextToken();
+			expression.setOperador(Symbol.LT);
+		}
+		else if (lexer.token == Symbol.GT){
+			lexer.nextToken();
+			expression.setOperador(Symbol.GT);
+		}
+		else if (lexer.token == Symbol.EQUAL){
+			lexer.nextToken();
+			expression.setOperador(Symbol.EQUAL);
 		}
 		else{
 			error.signal("Faltou < ou > ou =");
@@ -757,7 +779,7 @@ public class Compiler {
 	}
 
 	// for_stmt -> FOR ({assign_expr}; {cond}; {id assign_expr}) stmt_list ENDFOR
-	public void for_stmt(){
+	public void for_stmt(ForStatement statement){
 		if (lexer.token != Symbol.FOR){
 			error.signal("Faltou FOR");
 		}
@@ -772,8 +794,14 @@ public class Compiler {
 
 		// Enquanto for declaração de variáveis no for, verifica as variáveis
 		while (lexer.token == Symbol.IDENT){
-			id();
-			assign_expr();
+			Variable var = new Variable(id(), Symbol.INT, null);
+			CompositeExpr ce = assign_expr();
+
+			// Seta o novo Array
+			statement.setAtribuicaoInicio(new ArrayList<AssignStatement>());
+			// Adiciona no Array do inicio do statement
+			// Uma nova variavel e uma nova atribuição
+			statement.getAtribuicaoInicio().add(new AssignStatement(var, ce));
 		}
 
 		if (lexer.token != Symbol.SEMICOLON){
@@ -784,7 +812,7 @@ public class Compiler {
 
 		// Enquanto for um IDENT ou '(' ou ')' ou float ou int, chama o cond()
 		while (lexer.token == Symbol.LPAR || lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL || lexer.token == Symbol.IDENT){
-			cond();
+			cond(statement.getExpr());
 		}
 
 		if (lexer.token != Symbol.SEMICOLON){
@@ -795,8 +823,16 @@ public class Compiler {
 
 		// Enquanto for um IDENT, chama o id() e assign_expr()
 		while(lexer.token == Symbol.IDENT){
-			id();
-			assign_expr();
+			Variable var = new Variable(id(), Symbol.INT, null);
+			CompositeExpr ce = assign_expr();
+			// id();
+			// assign_expr();
+			// Seta o novo Array
+			statement.setAtribuicaoFinal(new ArrayList<AssignStatement>());
+			// Adiciona no Array do inicio do statement
+			// Uma nova variavel e uma nova atribuição
+			statement.getAtribuicaoFinal().add(new AssignStatement(var, ce));
+			// statement.getAtribuicaoFinal().add(new AssignStatement(new Variable(id(), Symbol.INT, null), assign_expr()));
 		}
 
 		if (lexer.token != Symbol.RPAR){
@@ -804,7 +840,12 @@ public class Compiler {
 		}
 
 		lexer.nextToken();
-		stmt_list(new ArrayList<Statement>());
+		
+		// Criando um novo objeto ForBody e setando no statement
+		statement.setCorpo(new ForBody(new ArrayList<Statement>()));
+
+		// Pegando do ForBody o arrayStmt
+		stmt_list(statement.getCorpo().getArrayStmt());
 
 		if (lexer.token != Symbol.ENDFOR){
 			error.signal("Faltou ENDFOR");

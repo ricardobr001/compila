@@ -71,11 +71,11 @@ Métodos concluídos da classe Compiler
 - [x] mulop
 
 ### Complex Statements and Condition
-- [ ] if_stmt
-- [ ] else_part
-- [ ] cond
-- [ ] compop
-- [ ] for_stmt
+- [x] if_stmt
+- [x] else_part
+- [x] cond
+- [x] compop
+- [x] for_stmt **Problema de sobreescrita no cabeçalho do for caso tenha mais de uma condição, atribuição no inicio e fim**
 
 # Lexer
 Métodos concluídos da classe Lexer
@@ -86,6 +86,7 @@ Métodos concluídos da classe Lexer
 Objetos criados no pacote AST
 
 - [x] Variable
+<br/>
 - [x] PgmBody
     - [x] Function `atributo PgmBody`
         - [x] FunctionBody `atributo Function`
@@ -93,12 +94,21 @@ Objetos criados no pacote AST
         - [x] AssignStatement `extends Statement`
         - [x] ReadStatement `extends Statement`
         - [x] WriteStatement `extends Statement`
+        - [x] IfStatement `extends Statement`
+        - [x] ElseStatement `extends Statement`
+        - [x] ReturnStatement `extends Statement`
+        - [x] ForStatement `extends Statement`
+<br/>
 - [x] Expr `abstract | atributo Statement`
     - [x] CompositeExpr `extends Expr`
     - [x] VariableExpr `extends Expr | atributo CompositeExpr`
     - [x] IntNumberExpr `extends Expr | atributo CompositeExpr`
     - [x] FloatNumberExpr `extends Expr | atributo CompositeExpr`
-    
+<br/>
+- [x] IfBody `atributo IfStatement | ElseStatement`
+- [x] ForBody `atributo ForStatement`
+<br/>
+- [x] PW `PrintWriter`
 
 # Correções
 stmt -> TODAS AS REGRAS ANTERIORES | call_expr ;<br/>
