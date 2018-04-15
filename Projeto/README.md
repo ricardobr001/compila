@@ -49,26 +49,26 @@ Métodos concluídos da classe Compiler
 - [ ] stmt 
 
 ### Basic Statements
-- [x] assign_stmt
-- [x] assign_expr
-- [ ] read_stmt
-- [ ] write_stmt
-- [ ] return_stmt
+- [x] assign_stmt **Dependendo da expressão, perdendo informação por sobreescrita, arrumar!**
+- [x] assign_expr **Dependendo da expressão, perdendo informação por sobreescrita, arrumar!**
+- [x] read_stmt
+- [x] write_stmt
+- [x] return_stmt
 
 ### Expressions
 - [x] expr
 - [x] expr_tail
-- [ ] factor
-- [ ] factor_tail
-- [ ] postfix_expr
-    - [ ] primary
+- [x] factor
+- [x] factor_tail
+- [x] postfix_expr
+    - [x] primary
     - [x] call_expr
 - [x] call_expr
 - [x] expr_list
 - [x] expr_list_tail
-- [ ] primary
+- [x] primary
 - [x] addop
-- [ ] mulop
+- [x] mulop
 
 ### Complex Statements and Condition
 - [ ] if_stmt
@@ -80,21 +80,24 @@ Métodos concluídos da classe Compiler
 # Lexer
 Métodos concluídos da classe Lexer
 
-- [x] nextToken **Ajustes necessários para recuperar o stringValue no compiler para utilizar no genC() dos objetos da AST**
+- [x] nextToken
 
 # AST
 Objetos criados no pacote AST
 
 - [x] Variable
 - [x] PgmBody
-    - [x] Function `atributo /\`
-        - [x] FunctionBody `atributo /\`
+    - [x] Function `atributo PgmBody`
+        - [x] FunctionBody `atributo Function`
     - [x] Statement
-        - [x] AssignStatement `extends /\`
+        - [x] AssignStatement `extends Statement`
+        - [x] ReadStatement `extends Statement`
+        - [x] WriteStatement `extends Statement`
 - [x] Expr `abstract | atributo Statement`
-    - [x] CompositeExpr `extends`
-    - [x] VariableExpr `extends`
-    - [x] IntNumberExpr `extends`
+    - [x] CompositeExpr `extends Expr`
+    - [x] VariableExpr `extends Expr | atributo CompositeExpr`
+    - [x] IntNumberExpr `extends Expr | atributo CompositeExpr`
+    - [x] FloatNumberExpr `extends Expr | atributo CompositeExpr`
     
 
 # Correções

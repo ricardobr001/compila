@@ -108,10 +108,10 @@ public class Lexer {
 
 			// Se não temos um int
 			else{
-				numberValue = Integer.parseInt(aux);
+				intValue = Integer.parseInt(aux);
 
 				// Verifica se o número é maior que o valor máximo permitido
-				if (numberValue > MaxValueInteger){
+				if (intValue > MaxValueInteger){
 					error.signal("Numero maior que 32768");
 				}
 
@@ -254,9 +254,13 @@ public class Lexer {
         return stringValue;
     }
 
-    public int getNumberValue() {
-        return numberValue;
-    }
+    public int getIntValue() {
+        return intValue;
+	}
+	
+	public float getFloatValue(){
+		return floatValue;
+	}
 
     public char getCharValue() {
         return charValue;
@@ -289,12 +293,13 @@ public class Lexer {
 			tokenPos++;
 		}
 
-		if (input[tokenPos] == ' ' || input[tokenPos] == '\n' || input[tokenPos] == '\t' || input[tokenPos] == '\r'){
+		// if (input[tokenPos] == ' ' || input[tokenPos] == '\n' || input[tokenPos] == '\t' || input[tokenPos] == '\r'){
 			token = Symbol.FLOATLITERAL;
-		}
-		else {
-			error.signal("Float invalido, encontrado '" + input[tokenPos] + "' após " + aux);
-		}
+			floatValue = Float.parseFloat(aux);
+		// }
+		// else {
+		// 	error.signal("Float invalido, encontrado '" + input[tokenPos] + "' após " + aux);
+		// }
 	}
 
 	// O IDENT pode ter no máximo tamanho 30, com o '\0', tamanho 31
@@ -350,7 +355,8 @@ public class Lexer {
     // current token
     public Symbol token;
     private String stringValue;
-    private int numberValue;
+	private int intValue;
+	private float floatValue;
     private char charValue;
 
     private int  tokenPos;

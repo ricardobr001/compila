@@ -391,20 +391,26 @@ public class Compiler {
 				Statement statement = new AssignStatement(new Variable(temp, null, null), null);
 
 				assign_stmt(statement);		//assign_stmt -> assign_expr ;
-				return statement;
-			}								//assign_expr -> id := expr
+				return statement;			//assign_expr -> id := expr
+			}
 			else{
 				error.signal("Faltou := ou (");
 			}
 		}
 		else if (lexer.token == Symbol.READ){
-		 	read_stmt();
+			Statement statement = new ReadStatement(null, null, new ArrayList<Variable>());
+			read_stmt((ReadStatement) statement);
+			return statement;
 		}
 		else if (lexer.token == Symbol.WRITE){
-		 	write_stmt();
+			Statement statement = new WriteStatement(null, null, new ArrayList<Variable>());
+			write_stmt((WriteStatement) statement);
+			return statement; 
 		}
 		else if (lexer.token == Symbol.RETURN){
-		 	return_stmt();
+			Statement statement = new ReturnStatement(null, new CompositeExpr(null, null, null));
+			return_stmt((ReturnStatement) statement);
+			return statement;
 		}
 		else if (lexer.token == Symbol.IF){
 		 	if_stmt();
@@ -445,7 +451,7 @@ public class Compiler {
 	}
 
 	// read_stmt -> READ ( id_list );
-	public void read_stmt(){
+	public void read_stmt(ReadStatement statement){
 		if (lexer.token != Symbol.READ){
 			error.signal("Faltou READ");
 		}
@@ -456,15 +462,14 @@ public class Compiler {
 			error.signal("Faltou (");
 		}
 
-		ArrayList<Variable> var = new ArrayList<Variable>();
-		Symbol tipo = Symbol.FLOAT;
+		Symbol tipo = Symbol.INT;
 		lexer.nextToken();
 
 		// if (lexer.token != Symbol.IDENT){
 		// 	error.signal("Faltou variavel");
 		// }
 
-		id_list(var, tipo);
+		id_list(statement.getArrayVar(), tipo);
 
 		if (lexer.token != Symbol.RPAR){
 			error.signal("Faltou )");
@@ -480,7 +485,7 @@ public class Compiler {
 	}
 
 	// write_stmt -> WRITE ( id_list );
-	public void write_stmt(){
+	public void write_stmt(WriteStatement statement){
 		if (lexer.token != Symbol.WRITE){
 			error.signal("Faltou WRITE");
 		}
@@ -495,9 +500,8 @@ public class Compiler {
 
 		// if (lexer.token != Symbol.IDENT)
 		// 	error.signal("Faltou variavel");
-		ArrayList<Variable> var = new ArrayList<Variable>();
-		Symbol tipo = Symbol.FLOAT;
-		id_list(var, tipo);
+		Symbol tipo = Symbol.INT;
+		id_list(statement.getArrayVar(), tipo);
 
 		if (lexer.token != Symbol.RPAR){
 			error.signal("Faltou )");
@@ -513,14 +517,13 @@ public class Compiler {
 	}
 
 	// return_stmt -> RETURN expr ;
-	public void return_stmt(){
+	public void return_stmt(ReturnStatement statement){
 		if (lexer.token != Symbol.RETURN){
 			error.signal("Faltou RETURN");
 		}
 
 		lexer.nextToken();
-		CompositeExpr expression = new CompositeExpr(null, null, null);
-		expr(expression);
+		expr(statement.getExpr());
 
 		if (lexer.token != Symbol.SEMICOLON){
 			error.signal("Faltou ;");
@@ -537,7 +540,18 @@ public class Compiler {
 	// expr -> factor expr_tail
 	public void expr(CompositeExpr expression){
 		factor(expression);
-		expr_tail(expression);
+
+		// if (expression.getDireita() == null){		
+			expr_tail(expression);	
+		// }
+		// else{
+		// 	// CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+		// 	// while(temp.getDireita() != null){
+		// 	// 	temp = (CompositeExpr) temp.getDireita();
+		// 	// }
+		// 	expr_tail((CompositeExpr) expression.getDireita());
+		// }
 	}
 
 	// expr_tail -> addop factor expr_tail | empty
@@ -553,15 +567,16 @@ public class Compiler {
 	// factor -> postfix_expr factor_tail
 	public void factor(CompositeExpr expression){
 		postfix_expr(expression);
-		factor_tail();
+		factor_tail(expression);
 	}
 
 	// factor_tail -> mulop postfix_expr factor_tail | empty
-	public void factor_tail(){
+	public void factor_tail(CompositeExpr expression){
 		if (lexer.token == Symbol.MULT || lexer.token == Symbol.DIV){
-			mulop();
-			postfix_expr(new CompositeExpr(null, null, null));
-			factor_tail();
+			mulop(expression);
+			expression.setDireita(new CompositeExpr(null, null, null));
+			postfix_expr((CompositeExpr) expression.getDireita());
+			factor_tail((CompositeExpr) expression.getDireita());
 		}
 	}
 
@@ -570,7 +585,7 @@ public class Compiler {
 	// primary -> (expr) | id | INTLITERAL | FLOATLITERAL
 	public void postfix_expr(CompositeExpr expression){
 		if (lexer.token == Symbol.LPAR || lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL){
-			primary();
+			primary(expression);
 		}
 		else if (lexer.token == Symbol.IDENT){
 			Variable var = new Variable(id(), null, null);
@@ -618,11 +633,11 @@ public class Compiler {
 	}
 
 	// primary -> (expr) | id | INTLITERAL | FLOATLITERAL
-	public void primary(){
+	public void primary(CompositeExpr expression){
 		// Se for um '(', anda e chama expr e verifica se tem ')'
 		if (lexer.token == Symbol.LPAR){
 			lexer.nextToken();
-			expr(new CompositeExpr(null, null, null));
+			expr(expression);
 
 			if (lexer.token != Symbol.RPAR){
 				error.signal("Faltou )");
@@ -631,12 +646,14 @@ public class Compiler {
 			lexer.nextToken();
 		}
 		else if(lexer.token == Symbol.IDENT){
-			id();
+			expression.setEsquerda(new VariableExpr(new Variable(id(), null, null)));
 		}
 		else if(lexer.token == Symbol.INTLITERAL){
+			expression.setEsquerda(new IntNumberExpr(lexer.getIntValue()));
 			lexer.nextToken();
 		}
 		else{
+			expression.setEsquerda(new FloatNumberExpr(lexer.getFloatValue()));
 			lexer.nextToken();
 		}
 	}
@@ -658,9 +675,14 @@ public class Compiler {
 	}
 
 	// mulop -> * | /
-	public void mulop(){
-		if (lexer.token == Symbol.MULT || lexer.token == Symbol.DIV){
+	public void mulop(CompositeExpr e){
+		if (lexer.token == Symbol.MULT){
 			lexer.nextToken();
+			e.setOperador(Symbol.MULT);
+		}
+		else if (lexer.token == Symbol.DIV){
+			lexer.nextToken();
+			e.setOperador(Symbol.DIV);
 		}
 		// else{
 		// 	lexer.nextToken();
