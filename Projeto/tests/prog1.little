@@ -1,3 +1,8 @@
 PROGRAM nomedoprograma
 BEGIN
+    FUNCTION VOID main()
+    BEGIN
+        INT r ;
+        r := 1 + ((2 * 3) / 4) ;
+    END
 END

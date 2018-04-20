@@ -405,7 +405,7 @@ public class Compiler {
 		else if (lexer.token == Symbol.WRITE){
 			Statement statement = new WriteStatement(null, null, new ArrayList<Variable>());
 			write_stmt((WriteStatement) statement);
-			return statement; 
+			return statement;
 		}
 		else if (lexer.token == Symbol.RETURN){
 			Statement statement = new ReturnStatement(null, new CompositeExpr(null, null, null));
@@ -545,17 +545,17 @@ public class Compiler {
 	public void expr(CompositeExpr expression){
 		factor(expression);
 
-		// if (expression.getDireita() == null){		
-			expr_tail(expression);	
-		// }
-		// else{
-		// 	// CompositeExpr temp = (CompositeExpr) expression.getDireita();
+		if (expression.getDireita() == null){
+			expr_tail(expression);
+		}
+		else{
+			CompositeExpr temp = (CompositeExpr) expression.getDireita();
 
-		// 	// while(temp.getDireita() != null){
-		// 	// 	temp = (CompositeExpr) temp.getDireita();
-		// 	// }
-		// 	expr_tail((CompositeExpr) expression.getDireita());
-		// }
+			while(temp.getDireita() != null){
+				temp = (CompositeExpr) temp.getDireita();
+			}
+			expr_tail(temp);
+		}
 	}
 
 	// expr_tail -> addop factor expr_tail | empty
@@ -564,7 +564,21 @@ public class Compiler {
 			addop(expression);
 			expression.setDireita(new CompositeExpr(null, null, null));
 			factor((CompositeExpr) expression.getDireita());
-			expr_tail((CompositeExpr) expression.getDireita());
+
+			if (expression.getDireita() == null){
+				expr_tail((CompositeExpr) expression.getDireita());
+			}
+			else{
+				CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+				while (temp.getDireita() != null){
+					temp = (CompositeExpr) temp.getDireita();
+				}
+
+				expr_tail(temp);
+
+			}
+			// expr_tail((CompositeExpr) expression.getDireita());
 		}
 	}
 
@@ -580,7 +594,21 @@ public class Compiler {
 			mulop(expression);
 			expression.setDireita(new CompositeExpr(null, null, null));
 			postfix_expr((CompositeExpr) expression.getDireita());
-			factor_tail((CompositeExpr) expression.getDireita());
+
+			if (expression.getDireita() == null){
+				factor_tail((CompositeExpr) expression.getDireita());
+			}
+			else{
+				CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+				while (temp.getDireita() != null){
+					temp = (CompositeExpr) temp.getDireita();
+				}
+
+				factor_tail(temp);
+
+			}
+			// factor_tail((CompositeExpr) expression.getDireita());
 		}
 	}
 
@@ -840,7 +868,7 @@ public class Compiler {
 		}
 
 		lexer.nextToken();
-		
+
 		// Criando um novo objeto ForBody e setando no statement
 		statement.setCorpo(new ForBody(new ArrayList<Statement>()));
 

@@ -15,7 +15,7 @@ public class CompositeExpr extends Expr{
     public void genC(PW pw){
         pw.printNI("(");    // Sem ident
         esquerda.genC(pw);
-        
+
         if (this.operador != null){
             pw.printNI(" " + operador.toString() + " ");
         }
@@ -29,7 +29,7 @@ public class CompositeExpr extends Expr{
     public void setEsquerda(Expr expression){
         this.esquerda = expression;
     }
-    
+
     public void setDireita(Expr expression){
         this.direita = expression;
     }
