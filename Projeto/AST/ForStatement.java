@@ -20,7 +20,7 @@ public class ForStatement extends Statement{
         // ----- Cabeçalho do FOR ------
         pw.printI();    // Ident
         pw.printNI("for ("); //inicio
-        
+
         // Atribuições do inicio
         for (AssignStatement as : atribuicaoInicio){
             as.genCFOR(pw);
@@ -34,7 +34,7 @@ public class ForStatement extends Statement{
         pw.printNI(" ; ");
 
         // Atribuições do fim
-        for (AssignStatement as : atribuicaoInicio){
+        for (AssignStatement as : atribuicaoFinal){
             as.genCFOR(pw);
         }
         pw.printNI(")");
