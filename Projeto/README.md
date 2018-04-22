@@ -39,24 +39,24 @@ Métodos concluídos da classe Compiler
 - [x] func_declarations
 - [x] func_decl
 - [x] func_decl_tail
-- [ ] func_body
+- [x] func_body
     - [x] decl
-    - [ ] stmt_list
+    - [x] stmt_list
 
 ### Statement List
-- [x] stmt_list `Terminar stmt`
+- [x] stmt_list
 - [x] stmt_tail
 - [x] stmt 
 
 ### Basic Statements
-- [x] assign_stmt `Dependendo da expressão, perdendo informação por sobrescrita, arrumar!`
-- [x] assign_expr `Dependendo da expressão, perdendo informação por sobrescrita, arrumar!`
+- [x] assign_stmt
+- [x] assign_expr
 - [x] read_stmt
 - [x] write_stmt
 - [x] return_stmt
 
 ### Expressions
-- [x] expr `Sobrescrevendo AQUI! (stmt comum)`
+- [x] expr
 - [x] expr_tail
 - [x] factor
 - [x] factor_tail
@@ -102,6 +102,7 @@ Objetos criados no pacote AST
     - [x] VariableExpr `extends Expr | atributo CompositeExpr`
     - [x] IntNumberExpr `extends Expr | atributo CompositeExpr`
     - [x] FloatNumberExpr `extends Expr | atributo CompositeExpr`
+    - [x] ParenthesesExpr `extends Expr | atributo CompositeExpr`
 - [x] IfBody `atributo IfStatement | ElseStatement`
 - [x] ForBody `atributo ForStatement`
 - [x] PW `PrintWriter`
