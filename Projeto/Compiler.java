@@ -543,7 +543,17 @@ public class Compiler {
 
 	// expr -> factor expr_tail
 	public void expr(CompositeExpr expression){
-		factor(expression);
+		if (expression.getDireita() == null){
+			factor(expression);
+		}
+		else {
+			CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+			while (temp.getDireita() != null){
+				temp = (CompositeExpr) temp.getDireita();
+			}
+			factor(temp);
+		}
 
 		if (expression.getDireita() == null){
 			expr_tail(expression);
@@ -561,9 +571,37 @@ public class Compiler {
 	// expr_tail -> addop factor expr_tail | empty
 	public void expr_tail(CompositeExpr expression){
 		if (lexer.token == Symbol.PLUS || lexer.token == Symbol.MINUS){
-			addop(expression);
-			expression.setDireita(new CompositeExpr(null, null, null));
-			factor((CompositeExpr) expression.getDireita());
+			if (expression.getDireita() == null){
+				addop(expression);
+			}
+			else {
+				CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+				while (temp.getDireita() != null){
+					temp = (CompositeExpr) temp.getDireita();
+				}
+
+				addop(temp);
+			}
+
+			// addop(expression);
+
+			if (expression.getDireita() == null){
+				expression.setDireita(new CompositeExpr(null, null, null));
+				factor((CompositeExpr) expression.getDireita());
+			}
+			else {
+				CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+				while (temp.getDireita() != null){
+					temp = (CompositeExpr) temp.getDireita();
+				}
+
+				temp.setDireita(new CompositeExpr(null, null, null));
+				factor((CompositeExpr) temp.getDireita());
+			}
+			// expression.setDireita(new CompositeExpr(null, null, null));
+			// factor((CompositeExpr) expression.getDireita());
 
 			if (expression.getDireita() == null){
 				expr_tail((CompositeExpr) expression.getDireita());
@@ -576,7 +614,6 @@ public class Compiler {
 				}
 
 				expr_tail(temp);
-
 			}
 			// expr_tail((CompositeExpr) expression.getDireita());
 		}
@@ -591,9 +628,36 @@ public class Compiler {
 	// factor_tail -> mulop postfix_expr factor_tail | empty
 	public void factor_tail(CompositeExpr expression){
 		if (lexer.token == Symbol.MULT || lexer.token == Symbol.DIV){
-			mulop(expression);
-			expression.setDireita(new CompositeExpr(null, null, null));
-			postfix_expr((CompositeExpr) expression.getDireita());
+			if (expression.getDireita() == null){
+				addop(expression);
+			}
+			else {
+				CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+				while (temp.getDireita() != null){
+					temp = (CompositeExpr) temp.getDireita();
+				}
+
+				mulop(temp);
+			}
+			// mulop(expression);
+
+			if (expression.getDireita() == null){
+				expression.setDireita(new CompositeExpr(null, null, null));
+				postfix_expr((CompositeExpr) expression.getDireita());
+			}
+			else {
+				CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+				while (temp.getDireita() != null){
+					temp = (CompositeExpr) temp.getDireita();
+				}
+
+				temp.setDireita(new CompositeExpr(null, null, null));
+				postfix_expr((CompositeExpr) temp.getDireita());
+			}
+			// expression.setDireita(new CompositeExpr(null, null, null));
+			// postfix_expr((CompositeExpr) expression.getDireita());
 
 			if (expression.getDireita() == null){
 				factor_tail((CompositeExpr) expression.getDireita());
@@ -606,26 +670,43 @@ public class Compiler {
 				}
 
 				factor_tail(temp);
-
 			}
 			// factor_tail((CompositeExpr) expression.getDireita());
 		}
 	}
 
 	// postfix_expr -> primary | id call_expr
-
-	// primary -> (expr) | id | INTLITERAL | FLOATLITERAL
 	public void postfix_expr(CompositeExpr expression){
 		if (lexer.token == Symbol.LPAR || lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL){
 			primary(expression);
 		}
 		else if (lexer.token == Symbol.IDENT){
 			Variable var = new Variable(id(), null, null);
-			expression.setEsquerda(new VariableExpr(var));
+
+			if (expression.getEsquerda() == null){
+				expression.setEsquerda(new VariableExpr(var));
+			}
+			else if (expression.getDireita() == null){
+				expression.setDireita(new CompositeExpr(new VariableExpr(var), null, null));
+			}
+			else {
+				CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+				while (temp.getDireita() != null){
+					temp = (CompositeExpr) temp.getDireita();
+				}
+
+				if (temp.getEsquerda() == null){
+					temp.setEsquerda(new VariableExpr(var));
+				}
+				else {
+					temp.setDireita(new CompositeExpr(new VariableExpr(var), null, null));
+				}
+			}
 
 			if (lexer.token == Symbol.LPAR){
 				call_expr(expression);
-			}
+			}			
 		}
 	}
 
@@ -633,6 +714,32 @@ public class Compiler {
 	public void call_expr(CompositeExpr expression){
 		if (lexer.token != Symbol.LPAR){
 			error.signal("Faltou (");
+		}
+
+		if (expression.getEsquerda() == null){
+			expression.setEsquerda(new ParenthesesExpr("("));
+		}
+		else if (expression.getDireita() == null){
+			expression.setDireita(new CompositeExpr(null, null, null));
+			CompositeExpr temp = (CompositeExpr) expression.getDireita();
+			temp.setEsquerda(new ParenthesesExpr("("));
+		}
+		else {
+			CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+			while (temp.getDireita() != null){
+				temp = (CompositeExpr) temp.getDireita();
+			}
+
+			ParenthesesExpr par = new ParenthesesExpr("(");
+
+			if (temp.getEsquerda() == null){
+				temp.setEsquerda(par);
+				temp.setDireita(new CompositeExpr(null, null, null));
+			}
+			else {
+				temp.setDireita(new CompositeExpr(par, null, null));
+			}
 		}
 
 		lexer.nextToken();
@@ -643,6 +750,27 @@ public class Compiler {
 
 		if (lexer.token != Symbol.RPAR){
 			error.signal("Faltou )");
+		}
+
+		if (expression.getDireita() == null){
+			ParenthesesExpr par = new ParenthesesExpr(")");
+			expression.setDireita(new CompositeExpr(par, null, null));
+		}
+		else {
+			CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+			while (temp.getDireita() != null){
+				temp = (CompositeExpr) temp.getDireita();
+			}
+
+			ParenthesesExpr par = new ParenthesesExpr(")");
+
+			if (temp.getEsquerda() == null){
+				temp.setEsquerda(par);
+			}
+			else {
+				temp.setDireita(new CompositeExpr(par, null, null));
+			}
 		}
 
 		lexer.nextToken();
@@ -659,6 +787,20 @@ public class Compiler {
 		// Se for uma virgula, chama expr e expr_list_tail
 		if (lexer.token == Symbol.COMMA){
 			lexer.nextToken();
+
+			if (expression.getDireita() == null){
+				expression.setOperador(Symbol.COMMA);
+			}
+			else {
+				CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+				while (temp.getDireita() != null){
+					temp = (CompositeExpr) temp.getDireita();
+				}
+
+				temp.setOperador(Symbol.COMMA);
+			}
+
 			expr(expression);
 			expr_list_tail(expression);
 		}
@@ -669,23 +811,100 @@ public class Compiler {
 		// Se for um '(', anda e chama expr e verifica se tem ')'
 		if (lexer.token == Symbol.LPAR){
 			lexer.nextToken();
-			expr(expression);
+
+			if (expression.getEsquerda() == null){
+				expression.setEsquerda(new ParenthesesExpr("("));
+				expr(expression);
+			}
+			else if (expression.getDireita() == null){
+				expression.setDireita(new CompositeExpr(null, null, null));
+				CompositeExpr temp = (CompositeExpr) expression.getDireita();
+				temp.setEsquerda(new ParenthesesExpr("("));
+
+				expr(temp);
+			}
+			else{
+				CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+				while (temp.getDireita() != null){
+					temp = (CompositeExpr) temp.getDireita();
+				}
+
+				ParenthesesExpr par = new ParenthesesExpr("(");
+
+				if (temp.getEsquerda() == null){
+					temp.setEsquerda(par);
+
+					temp.setDireita(new CompositeExpr(null, null, null));
+					expr((CompositeExpr) temp.getDireita());
+				}
+				else {
+					temp.setDireita(new CompositeExpr(par, null, null));
+					expr((CompositeExpr) temp.getDireita());
+				}
+			}
+
+			// expr(expression);
 
 			if (lexer.token != Symbol.RPAR){
 				error.signal("Faltou )");
 			}
 
+			if (expression.getDireita() == null){
+				ParenthesesExpr par = new ParenthesesExpr(")");
+				expression.setDireita(new CompositeExpr(par, null, null));
+			}
+			else{
+				CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+				while (temp.getDireita() != null){
+					temp = (CompositeExpr) temp.getDireita();
+				}
+
+				ParenthesesExpr par = new ParenthesesExpr(")");
+
+				if (temp.getEsquerda() == null){
+					temp.setEsquerda(par);
+				}
+				else {
+					temp.setDireita(new CompositeExpr(par, null, null));
+				}
+			}
+
 			lexer.nextToken();
 		}
 		else if(lexer.token == Symbol.IDENT){
-			expression.setEsquerda(new VariableExpr(new Variable(id(), null, null)));
+			if (expression.getEsquerda() == null){
+				expression.setEsquerda(new VariableExpr(new Variable(id(), null, null)));
+			}
+			else {
+				String ident = id();
+				CompositeExpr temp = new CompositeExpr(null, null, null);
+				VariableExpr var = new VariableExpr(new Variable(ident, null, null));
+				temp.setEsquerda(var);
+				expression.setDireita(temp);
+			}
 		}
 		else if(lexer.token == Symbol.INTLITERAL){
-			expression.setEsquerda(new IntNumberExpr(lexer.getIntValue()));
+			if (expression.getEsquerda() == null){
+				expression.setEsquerda(new IntNumberExpr(lexer.getIntValue()));
+			}
+			else {
+				CompositeExpr temp = new CompositeExpr(new IntNumberExpr(lexer.getIntValue()), null, null);
+				expression.setDireita(temp);
+			}
+			
 			lexer.nextToken();
 		}
 		else{
-			expression.setEsquerda(new FloatNumberExpr(lexer.getFloatValue()));
+			if (expression.getEsquerda() == null){
+				expression.setEsquerda(new FloatNumberExpr(lexer.getFloatValue()));
+			}
+			else {
+				CompositeExpr temp = new CompositeExpr(new FloatNumberExpr(lexer.getFloatValue()), null, null);
+				expression.setDireita(temp);
+			}
+			
 			lexer.nextToken();
 		}
 	}
