@@ -14,8 +14,9 @@ public class IfStatement extends Statement{
 
         // Cabeçalho do IF
         pw.printI();    // Ident
-        pw.printNI("if "); //Variavel
-        super.getExpr().genC(pw);   // Expressão        
+        pw.printNI("if ("); //Variavel
+        super.getExpr().genC(pw);   // Expressão
+        pw.printNI(")");  
         pw.printBL();
 
         // corpo do IF
