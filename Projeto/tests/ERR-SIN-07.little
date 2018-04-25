@@ -1,0 +1,18 @@
+PROGRAM nomedoprograma
+BEGIN
+    FUNCTION VOID main()
+    BEGIN
+        INT a , b , r ;
+
+        READ ( a , b );
+        
+        --Depois da condicao do if eh necessario a palavra 'THEN'
+		IF ( a > b ) 
+		    r := b;
+		ELSE
+			r := a;
+		ENDIF
+
+        WRITE ( r );
+    END
+END

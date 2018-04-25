@@ -17,7 +17,7 @@ public class Compiler {
         PgmBody pg = program();
 
         if (lexer.token != Symbol.EOF)
-			error.signal("nao chegou no fim do arq");
+			error.signal("Didn't find the end of the file");
 
 		return pg;
     }
@@ -30,7 +30,7 @@ public class Compiler {
     public PgmBody program(){
 		// Verifica se começou com a palavra PROGRAM
 		if (lexer.token != Symbol.PROGRAM){
-			error.signal("faltou PROGRAM");
+			error.signal("Expected 'PROGRAM' but found '" + lexer.getStringValue() + "'\nFirst word should be 'PROGRAM'");
 		}
 
 		lexer.nextToken();
@@ -38,7 +38,7 @@ public class Compiler {
 
 		// Verifica se tem a palavra BEGIN depois do id
 		if (lexer.token != Symbol.BEGIN){
-			error.signal("faltou BEGIN");
+			error.signal("Expected 'BEGIN' but found '" + lexer.getStringValue() + "'\nThe program need to be between 'BEGIN' and 'END' words");
 		}
 
 		lexer.nextToken();
@@ -46,7 +46,7 @@ public class Compiler {
 
 		// Verifica se tem a palavra END depois do pgm_body
 		if (lexer.token != Symbol.END){
-			error.signal("faltou END");
+			error.signal("Expected 'END' but found '" + lexer.getStringValue() + "'\nThe program need to be between 'BEGIN' and 'END' words");
 		}
 
 		lexer.nextToken();
@@ -58,7 +58,7 @@ public class Compiler {
 	public String id(){
 		// Verifica se é um IDENTIFICADOR
 		if (lexer.token != Symbol.IDENT){
-			error.signal("Identificador não encontrado");
+			error.signal("Expected variable but found '" + lexer.getStringValue() + "'");
 		}
 
 		String var = lexer.getStringValue();
@@ -121,14 +121,14 @@ public class Compiler {
 			Variable var = new Variable(id(), Symbol.STRING, null);
 
 			if (lexer.token != Symbol.ASSIGN){
-				error.signal("faltou :=");
+				error.signal("Expected ':=' but found '" + lexer.getStringValue() + "'\nStrings should be declared one per line");
 			}
 
 			lexer.nextToken();
 			var.setValor(str());	// Seta o valor no objeto Variable
 
 			if (lexer.token != Symbol.SEMICOLON){
-				error.signal("faltou ;");
+				error.signal("Expected ';' but found '" + lexer.getStringValue() + "'\nAfter a string declaration, need to have ';' in the end");
 			}
 
 			lexer.nextToken();
@@ -184,7 +184,7 @@ public class Compiler {
 
 			// Verificando se tem o ;
 			if (lexer.token != Symbol.SEMICOLON){
-				error.signal("faltou ;");
+				error.signal("Expected ;");
 			}
 			lexer.nextToken();
 		}
@@ -201,7 +201,7 @@ public class Compiler {
 			return Symbol.INT;
 		}
 		else{
-			error.signal("tipo de variavel incorreto");
+			error.signal("Incorrect variable type\nExpected 'INT' or 'FLOAT'");
 			return null;
 		}
 	}
@@ -295,7 +295,7 @@ public class Compiler {
 
 			// Verifica se tem o '(' depois do function
 			if (lexer.token != Symbol.LPAR){
-				error.signal("faltou (");
+				error.signal("Expected (");
 			}
 
 			lexer.nextToken();
@@ -308,14 +308,14 @@ public class Compiler {
 
 			// Verifica se tem o ')' depois do param_decl_list
 			if (lexer.token != Symbol.RPAR){
-				error.signal("faltou )");
+				error.signal("Expected )");
 			}
 
 			lexer.nextToken();
 
 			// Verifica se tem a palavra BEGIN depois do ')'
 			if (lexer.token != Symbol.BEGIN){
-				error.signal("faltou BEGIN");
+				error.signal("Expected BEGIN");
 			}
 
 			lexer.nextToken();
@@ -323,7 +323,7 @@ public class Compiler {
 
 			// Verifica se tem a palavra END depois do func_body
 			if (lexer.token != Symbol.END){
-				error.signal("faltou END");
+				error.signal("Expected END");
 			}
 
 			lexer.nextToken();
@@ -382,7 +382,7 @@ public class Compiler {
 				call_expr(expression);	//call_expr -> id ( {expr_list} )
 
 				if (lexer.token != Symbol.SEMICOLON) {
-					error.signal("Faltou ;");
+					error.signal("Expected ;");
 				}
 
 				lexer.nextToken();
@@ -394,7 +394,7 @@ public class Compiler {
 				return statement;			//assign_expr -> id := expr
 			}
 			else{
-				error.signal("Faltou := ou (");
+				error.signal("Expected ':=' ou '(' but found '" + lexer.getStringValue() + "'");
 			}
 		}
 		else if (lexer.token == Symbol.READ){
@@ -435,7 +435,7 @@ public class Compiler {
 		statement.setExpr(assign_expr());
 
 		if (lexer.token != Symbol.SEMICOLON){
-			error.signal("Faltou ;");
+			error.signal("Expected ';' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
@@ -444,7 +444,7 @@ public class Compiler {
 	// assign_expr -> := expr
 	public CompositeExpr assign_expr(){
 		if (lexer.token != Symbol.ASSIGN){
-			error.signal("Faltou :=");
+			error.signal("Expected ':=' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
@@ -457,32 +457,32 @@ public class Compiler {
 	// read_stmt -> READ ( id_list );
 	public void read_stmt(ReadStatement statement){
 		if (lexer.token != Symbol.READ){
-			error.signal("Faltou READ");
+			error.signal("Expected 'READ' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
 
 		if (lexer.token != Symbol.LPAR){
-			error.signal("Faltou (");
+			error.signal("Expected '(' but found '" + lexer.getStringValue() + "'");
 		}
 
 		Symbol tipo = Symbol.INT;
 		lexer.nextToken();
 
 		// if (lexer.token != Symbol.IDENT){
-		// 	error.signal("Faltou variavel");
+		// 	error.signal("Expected variavel");
 		// }
 
 		id_list(statement.getArrayVar(), tipo);
 
 		if (lexer.token != Symbol.RPAR){
-			error.signal("Faltou )");
+			error.signal("Expected ')' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
 
 		if (lexer.token != Symbol.SEMICOLON){
-			error.signal("Faltou ;");
+			error.signal("Expected ';' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
@@ -491,30 +491,30 @@ public class Compiler {
 	// write_stmt -> WRITE ( id_list );
 	public void write_stmt(WriteStatement statement){
 		if (lexer.token != Symbol.WRITE){
-			error.signal("Faltou WRITE");
+			error.signal("Expected 'WRITE' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
 
 		if (lexer.token != Symbol.LPAR){
-			error.signal("Faltou (");
+			error.signal("Expected '(' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
 
 		// if (lexer.token != Symbol.IDENT)
-		// 	error.signal("Faltou variavel");
+		// 	error.signal("Expected variavel");
 		Symbol tipo = Symbol.INT;
 		id_list(statement.getArrayVar(), tipo);
 
 		if (lexer.token != Symbol.RPAR){
-			error.signal("Faltou )");
+			error.signal("Expected ')' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
 
 		if (lexer.token != Symbol.SEMICOLON){
-			error.signal("Faltou ;");
+			error.signal("Expected ';' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
@@ -523,14 +523,14 @@ public class Compiler {
 	// return_stmt -> RETURN expr ;
 	public void return_stmt(ReturnStatement statement){
 		if (lexer.token != Symbol.RETURN){
-			error.signal("Faltou RETURN");
+			error.signal("Expected 'RETURN' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
 		expr(statement.getExpr());
 
 		if (lexer.token != Symbol.SEMICOLON){
-			error.signal("Faltou ;");
+			error.signal("Expected ';' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
@@ -713,7 +713,7 @@ public class Compiler {
 	// call_expr -> ( {expr_list} ) (LER ID ANTES DE CHAMAR A FUNÇÃO)
 	public void call_expr(CompositeExpr expression){
 		if (lexer.token != Symbol.LPAR){
-			error.signal("Faltou (");
+			error.signal("Expected '(' but found '" + lexer.getStringValue() + "'");
 		}
 
 		if (expression.getEsquerda() == null){
@@ -749,7 +749,7 @@ public class Compiler {
 		}
 
 		if (lexer.token != Symbol.RPAR){
-			error.signal("Faltou )");
+			error.signal("Expected ')' but found '" + lexer.getStringValue() + "'");
 		}
 
 		if (expression.getDireita() == null){
@@ -847,7 +847,7 @@ public class Compiler {
 			// expr(expression);
 
 			if (lexer.token != Symbol.RPAR){
-				error.signal("Faltou )");
+				error.signal("Expected ')' but found '" + lexer.getStringValue() + "'");
 			}
 
 			if (expression.getDireita() == null){
@@ -948,26 +948,26 @@ public class Compiler {
 	// if_stmt -> IF ( cond ) THEN stmt_list else_part ENDIF
 	public void if_stmt(IfStatement statement){
 		if (lexer.token != Symbol.IF){
-			error.signal("Faltou IF");
+			error.signal("Expected 'IF' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
 
 		if (lexer.token != Symbol.LPAR){
-			error.signal("Faltou (");
+			error.signal("Expected '(' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
 		cond(statement.getExpr());
 
 		if (lexer.token != Symbol.RPAR){
-			error.signal("Faltou )");
+			error.signal("Expected ')' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
 
 		if (lexer.token != Symbol.THEN){
-			error.signal("Faltou THEN");
+			error.signal("Expected 'THEN' but found '" + lexer.getStringValue() + "'\nAfter the condition in an IF, need to write the word 'THEN'");
 		}
 
 		lexer.nextToken();
@@ -976,7 +976,7 @@ public class Compiler {
 		else_part(statement);
 
 		if (lexer.token != Symbol.ENDIF){
-			error.signal("Faltou ENDIF");
+			error.signal("Expected 'ENDIF' but found '" + lexer.getStringValue() + "'\nAn IF or ELSE block need to end with the word 'ENDIF'");
 		}
 		lexer.nextToken();
 	}
@@ -1021,20 +1021,20 @@ public class Compiler {
 			expression.setOperador(Symbol.EQUAL);
 		}
 		else{
-			error.signal("Faltou < ou > ou =");
+			error.signal("Expected '<' or '>' or '=' but found '" + lexer.getStringValue() + "'");
 		}
 	}
 
 	// for_stmt -> FOR ({assign_expr}; {cond}; {id assign_expr}) stmt_list ENDFOR
 	public void for_stmt(ForStatement statement){
 		if (lexer.token != Symbol.FOR){
-			error.signal("Faltou FOR");
+			error.signal("Expected 'FOR' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
 
 		if (lexer.token != Symbol.LPAR){
-			error.signal("Faltou (");
+			error.signal("Expected '(' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
@@ -1052,7 +1052,7 @@ public class Compiler {
 		}
 
 		if (lexer.token != Symbol.SEMICOLON){
-			error.signal("Faltou ;");
+			error.signal("Expected ';' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
@@ -1063,7 +1063,7 @@ public class Compiler {
 		}
 
 		if (lexer.token != Symbol.SEMICOLON){
-			error.signal("Faltou ;");
+			error.signal("Expected ';' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
@@ -1083,7 +1083,7 @@ public class Compiler {
 		}
 
 		if (lexer.token != Symbol.RPAR){
-			error.signal("Faltou )");
+			error.signal("Expected ')' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();
@@ -1095,7 +1095,7 @@ public class Compiler {
 		stmt_list(statement.getCorpo().getArrayStmt());
 
 		if (lexer.token != Symbol.ENDFOR){
-			error.signal("Faltou ENDFOR");
+			error.signal("Expected 'ENDFOR' but found '" + lexer.getStringValue() + "'");
 		}
 
 		lexer.nextToken();

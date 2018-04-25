@@ -1,0 +1,5 @@
+PROGRAM nomedoprograma
+BEGIN
+    -- Strings globais devem terminar com ';' no final
+    STRING global := "aaa" !
+END

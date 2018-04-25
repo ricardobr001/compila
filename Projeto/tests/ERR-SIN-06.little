@@ -1,0 +1,18 @@
+PROGRAM nomedoprograma
+BEGIN
+    FUNCTION VOID main()
+    BEGIN
+        INT a , b , r ;
+
+        READ ( a , b );
+        
+        --Soh sao aceitos operadores '>', '<' e '='
+		IF ( !a ) THEN
+		    r := b;
+		ELSE
+			r := a;
+		ENDIF
+
+        WRITE ( r );
+    END
+END

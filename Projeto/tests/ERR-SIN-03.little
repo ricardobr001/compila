@@ -1,0 +1,7 @@
+PROGRAM nomedoprograma
+BEGIN
+    FUNCTION VOID main()
+    BEGIN
+    --O main pode nao ter nenhum conteudo, mas deve estar entre 'BEGIN' e 'END'
+    ENDD
+END

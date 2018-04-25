@@ -1,0 +1,14 @@
+PROGRAM nomedoprograma
+BEGIN
+    FUNCTION VOID main()
+    BEGIN
+        INT a , b , r ;
+
+        --Leitura de variaveis deve estar entre '(' ')'
+        READ ( a , b ;
+
+        r :=  a + b ;
+
+        WRITE ( r );
+    END
+END

@@ -1,0 +1,7 @@
+PROGRAM nomedoprograma
+BEGIN
+    STRING global := "aaa" ;
+
+    -- Nao podemos declarar globais dessa maneira
+    STRING str1 := "bbb" , str2 := "ccc" ;
+END

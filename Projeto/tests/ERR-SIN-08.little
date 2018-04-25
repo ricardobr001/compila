@@ -1,0 +1,17 @@
+PROGRAM nomedoprograma
+BEGIN
+    FUNCTION VOID main()
+    BEGIN
+        INT a , b , r ;
+
+        READ ( a , b );
+
+		IF ( a > b ) THEN
+		    r := b;
+		ELSE
+			r := a;
+        --Um bloco de IF ou ELSE precisa terminar com ENDIF
+
+        WRITE ( r );
+    END
+END
