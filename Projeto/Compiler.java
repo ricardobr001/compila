@@ -53,7 +53,7 @@ public class Compiler {
 
 		return pg;
 	}
-
+//
 	// id -> IDENT
 	public String id(){
 		// Verifica se é um IDENTIFICADOR
