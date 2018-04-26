@@ -107,6 +107,14 @@ Objetos criados no pacote AST
 - [x] ForBody `atributo ForStatement`
 - [x] PW `PrintWriter`
 
+# Análise Semântica
+- [] Classe da tabela Hash de nomes de variáveis globais e locais `Falta terminar`
+- [] Classe da tabela Hash de nomes de função
+- [] Verificar se a variavel já foi declarada
+- [] Verificar se o valor atribuído respeita o tipo da variável
+- [] Operações aritmética apenas com números
+- [] Condição retorna verdadeiro ou falso
+
 # Correções
 stmt -> `TODAS AS REGRAS ANTERIORES | call_expr ;`<br/>
 id call_expr -> ( {expr_list} ) `ID REMOVIDO DO call_expr`<br/>
