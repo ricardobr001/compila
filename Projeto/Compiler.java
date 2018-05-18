@@ -7,11 +7,13 @@ public class Compiler {
 	// para geracao de codigo
 	public static final boolean GC = false;
 	private Lexer lexer;
-    private CompilerError error;
+	private CompilerError error;
+	private SymbolTable table;
 
     public PgmBody compile( char []p_input ) {
 		error = new CompilerError(null);
 		lexer = new Lexer(p_input, error);
+		table = new SymbolTable();
 		error.setLexer(lexer);
         lexer.nextToken();
         PgmBody pg = program();
@@ -53,7 +55,7 @@ public class Compiler {
 
 		return pg;
 	}
-//
+
 	// id -> IDENT
 	public String id(){
 		// Verifica se é um IDENTIFICADOR
@@ -71,27 +73,29 @@ public class Compiler {
 	public PgmBody pgm_body(){
 		ArrayList<Variable> var = new ArrayList<Variable>();
 		ArrayList<Function> func = new ArrayList<Function>();
-		decl(var);
+		
+		//flag de variavel global
+		decl(var, true);
 		func_declarations(func);
 		return new PgmBody(var, func);
 	}
 
 	// decl -> string_decl_list {decl} | var_decl_list {decl} | empty
-	public void decl(ArrayList<Variable> var){
+	public void decl(ArrayList<Variable> var, boolean flag){
 		// Verifica se é uma string
 		if (lexer.token == Symbol.STRING){
-			string_decl_list(var);
+			string_decl_list(var, flag);
 
 			if (lexer.token == Symbol.STRING || lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
-				decl(var);
+				decl(var, flag);
 			}
 		}
 		// Verifica se é uma variável
 		else if (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
-			var_decl_list(var);
+			var_decl_list(var, flag);
 
 			if (lexer.token == Symbol.STRING || lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
-				decl(var);
+				decl(var, flag);
 			}
 		}
 	}
@@ -100,14 +104,25 @@ public class Compiler {
 	/* 				Global String Declaration			*/
 	/* =================================================*/
 
+	// true -> variavel global
+	// false -> variavel local
 	// string_decl_list -> string_decl {string_decl_tail}
-	public void string_decl_list(ArrayList<Variable> var){
+	public void string_decl_list(ArrayList<Variable> var, boolean flag){
 		// Verifica se é uma string
 		if (lexer.token == Symbol.STRING){
-			var.add(string_decl());
+			Variable str = string_decl();
+
+			if (flag){
+				table.putGlobal(str.getVar(), str);
+			}
+			else {
+				table.putLocal(str.getVar(), str);
+			}
+
+			var.add(str);
 
 			if (lexer.token == Symbol.STRING){
-				string_decl_tail(var);
+				string_decl_tail(var, flag);
 			}
 		}
 	}
@@ -119,6 +134,15 @@ public class Compiler {
 			lexer.nextToken();
 
 			Variable var = new Variable(id(), Symbol.STRING, null);
+
+			// Análise semântica, verificamos se essa variavél ja foi declarada anteriormente
+			if (table.returnGlobal(var.getVar()) != null){
+				error.signal("Error, variable '" + var.getVar() + "' has already been declared as global variable");
+			}
+
+			if (table.returnLocal(var.getVar()) != null){
+				error.signal("Error, variable '" + var.getVar() + "' has already been declared as local variable");
+			}
 
 			if (lexer.token != Symbol.ASSIGN){
 				error.signal("Expected ':=' but found '" + lexer.getStringValue() + "'\nStrings should be declared one per line");
@@ -154,12 +178,23 @@ public class Compiler {
 		return null;
 	}
 
+	// true -> variavel global
+	// false -> variavel local
 	// str_decl_tail -> string_decl {string_decl_tail}
-	public void string_decl_tail(ArrayList<Variable> var){
-		var.add(string_decl());
+	public void string_decl_tail(ArrayList<Variable> var, boolean flag){
+		Variable str = string_decl();
+
+		if (flag){
+			table.putGlobal(str.getVar(), str);
+		}
+		else {
+			table.putLocal(str.getVar(), str);
+		}
+
+		var.add(str);
 
 		if (lexer.token == Symbol.STRING){
-			string_decl_tail(var);
+			string_decl_tail(var, flag);
 		}
 	}
 
@@ -168,7 +203,7 @@ public class Compiler {
 	/* =================================================*/
 
 	// var_decl_list -> var_decl {var_decl_tail}
-	public void var_decl_list(ArrayList<Variable> var){
+	public void var_decl_list(ArrayList<Variable> var, boolean flag){
 		var_decl(var);
 
 		if (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
@@ -346,7 +381,9 @@ public class Compiler {
 	public FunctionBody func_body(){
 		ArrayList<Variable> var = new ArrayList<Variable>();
 		ArrayList<Statement> statement = new ArrayList<Statement>();
-		decl(var);
+
+		//flag de variavel local
+		decl(var, false);
 		stmt_list(statement);
 
 		return new FunctionBody(var, statement);

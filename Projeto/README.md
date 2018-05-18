@@ -120,4 +120,11 @@ stmt -> `TODAS AS REGRAS ANTERIORES | call_expr ;`<br/>
 id call_expr -> ( {expr_list} ) `ID REMOVIDO DO call_expr`<br/>
 id assign_expr -> := expr `ID REMOVIDO DO assign_expr`<br/>
 
+stmt -> call_stmt<br/> `Já atendido pelas mudanças acima`
+call_stmt -> call_expr ;<br/> `Já atendido pelas mudanças acima`
+
 Ou seja, toda chamada de `call_expr()` e `assign_expr()` precisa ter a chamada do `id()` antes!!
+
+# Observações
+`STRING` deve ser tratado como constante, não pode ser lido na função `READ`<br/>
+Obrigatóriamente o programa deve ter a função `int main()` sem parâmetros
