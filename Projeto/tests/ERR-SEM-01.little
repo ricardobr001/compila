@@ -1,0 +1,9 @@
+PROGRAM errsem01
+BEGIN
+  FUNCTION VOID main()
+  BEGIN
+    --String must be constant, thus the error
+    STRING error := "semantic error\n" ;
+    error := 1 + 2 ;
+  END
+END

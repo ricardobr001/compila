@@ -1,0 +1,9 @@
+PROGRAM errsem05
+BEGIN
+  --PROGRAM must have at least a FUNCTION called main()
+  FUNCTION INT intadd( INT x, INT y )
+  BEGIN
+    RETURN x + y ;
+
+  END
+END

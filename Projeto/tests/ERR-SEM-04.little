@@ -1,0 +1,13 @@
+PROGRAM err_sem_04
+BEGIN
+  FUNCTION VOID main()
+  BEGIN
+    -- Wrong type assignment
+    FLOAT res ;
+    INT pos , ta ;
+    READ ( po , ta ) ;
+
+    res := pos * ta ;
+    WRITE ( res );
+  END
+END

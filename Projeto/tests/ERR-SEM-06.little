@@ -1,0 +1,7 @@
+PROGRAM errsem06
+BEGIN
+  FUNCTION VOID main(INT err)
+  BEGIN
+    -- FUNCTION main() must not have any params
+  END
+END

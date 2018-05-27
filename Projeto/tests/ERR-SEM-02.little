@@ -1,0 +1,13 @@
+PROGRAM errsem02
+BEGIN
+  FUNCTION VOID main()
+  BEGIN
+    -- Function ID cannot be used as Variable id
+    addop :=  1 + 1 ;
+  END
+
+  FUNCTION INT addop (INT a, INT b)
+  BEGIN
+    RETURN a + b ;
+  END
+END
