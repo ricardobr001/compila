@@ -11,21 +11,21 @@ public class Compiler {
 	private SymbolTable table;
 
     public PgmBody compile( char []p_input ) {
-		error = new CompilerError(null);
-		lexer = new Lexer(p_input, error);
-		table = new SymbolTable();
-		error.setLexer(lexer);
-        lexer.nextToken();
-        PgmBody pg = program();
+			error = new CompilerError(null);
+			lexer = new Lexer(p_input, error);
+			table = new SymbolTable();
+			error.setLexer(lexer);
+	    lexer.nextToken();
+	    PgmBody pg = program();
 
-        if (lexer.token != Symbol.EOF)
-			error.signal("Didn't find the end of the file");
+	    if (lexer.token != Symbol.EOF)
+				error.signal("Didn't find the end of the file");
 
-		return pg;
+			return pg;
     }
 
 	/* =================================================*/
-	/* 						Program						*/
+	/* 						Program																*/
 	/* =================================================*/
 
     // Program -> 'PROGRAM' id 'BEGIN' pgm_body 'END'
@@ -73,7 +73,7 @@ public class Compiler {
 	public PgmBody pgm_body(){
 		ArrayList<Variable> var = new ArrayList<Variable>();
 		ArrayList<Function> func = new ArrayList<Function>();
-		
+
 		//flag de variavel global
 		decl(var, true);
 		func_declarations(func);
@@ -101,7 +101,7 @@ public class Compiler {
 	}
 
 	/* =================================================*/
-	/* 				Global String Declaration			*/
+	/* 				Global String Declaration									*/
 	/* =================================================*/
 
 	// true -> variavel global
@@ -743,7 +743,7 @@ public class Compiler {
 
 			if (lexer.token == Symbol.LPAR){
 				call_expr(expression);
-			}			
+			}
 		}
 	}
 
@@ -930,7 +930,7 @@ public class Compiler {
 				CompositeExpr temp = new CompositeExpr(new IntNumberExpr(lexer.getIntValue()), null, null);
 				expression.setDireita(temp);
 			}
-			
+
 			lexer.nextToken();
 		}
 		else{
@@ -941,7 +941,7 @@ public class Compiler {
 				CompositeExpr temp = new CompositeExpr(new FloatNumberExpr(lexer.getFloatValue()), null, null);
 				expression.setDireita(temp);
 			}
-			
+
 			lexer.nextToken();
 		}
 	}
