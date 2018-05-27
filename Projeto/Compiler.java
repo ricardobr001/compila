@@ -62,7 +62,7 @@ public class Compiler {
 		if (lexer.token != Symbol.IDENT){
 			error.signal("Expected variable but found '" + lexer.getStringValue() + "'");
 		}
-
+		//TODO VERIFY IF VARIABLE DECLARED
 		String var = lexer.getStringValue();
 		lexer.nextToken();
 
@@ -407,6 +407,7 @@ public class Compiler {
 			statement.add(stmt());
 			stmt_tail(statement);
 		}
+
 	}
 
 	// stmt -> id assign_stmt | read_stmt | write_stmt | return_stmt | if_stmt | for_stmt | id call_expr ;
