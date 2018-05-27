@@ -471,8 +471,14 @@ public class Compiler {
 	// assign_stmt -> assign_expr ;
 	public void assign_stmt(Statement statement){
 		statement.setExpr(assign_expr());
-
-		if (lexer.token != Symbol.SEMICOLON){
+		//semantic: checks string assingnment
+		//can't assign any value to a constant
+		Variable v = (Variable)(table.returnGlobal(statement.getVar().getVar()));
+		// System.out.println(v.getTipo() + " __ " + statement.getVar());
+		if(v.getTipo() == Symbol.STRING && statement.getExpr().getEsquerda() != null){
+			error.signal("Assignment to STRING '" + statement.getVar().getVar()  + "' forbidden. Can't assign new value to constant");
+		}
+		else if (lexer.token != Symbol.SEMICOLON){
 			error.signal("Expected ';' but found '" + lexer.getStringValue() + "'");
 		}
 
