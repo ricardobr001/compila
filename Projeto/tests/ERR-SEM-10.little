@@ -1,0 +1,11 @@
+PROGRAM errsem10
+BEGIN
+  FUNCTION VOID main()
+  BEGIN
+    INT i ;
+
+    --Variable of cond must be declared beforehand
+    FOR ( i := 0 ; i < 100 ; j := j + 1)
+      WRITE ( i ) ;
+    ENDFOR
+  END

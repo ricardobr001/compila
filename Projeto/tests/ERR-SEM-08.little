@@ -1,0 +1,13 @@
+PROGRAM errsem08
+BEGIN
+  FUNCTION VOID main()
+  BEGIN
+    INT somenumber ;
+    somenumber := errsem08( 3 , 4 ) ;
+  END
+  -- FUNC name can't be PROGRAM name 
+  FUNCTION INT errsem08 (INT a, INT b)
+  BEGIN
+    RETURN a + b ;
+  END
+END
