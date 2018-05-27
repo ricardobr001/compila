@@ -46,7 +46,7 @@ Métodos concluídos da classe Compiler
 ### Statement List
 - [x] stmt_list
 - [x] stmt_tail
-- [x] stmt 
+- [x] stmt
 
 ### Basic Statements
 - [x] assign_stmt
@@ -108,12 +108,16 @@ Objetos criados no pacote AST
 - [x] PW `PrintWriter`
 
 # Análise Semântica
-- [ ] Classe da tabela Hash de nomes de variáveis globais e locais `Falta terminar`
-- [ ] Classe da tabela Hash de nomes de função
+- [x] Classe da tabela Hash de nomes de variáveis globais e locais
+- [x] Classe da tabela Hash de nomes de função
 - [ ] Verificar se a variavel já foi declarada
 - [ ] Verificar se o valor atribuído respeita o tipo da variável
 - [ ] Operações aritmética apenas com números
 - [ ] Condição retorna verdadeiro ou falso
+
+#Geral  
+- [ ]  Gere automaticamente o código gerado usando o mesmo nome do arquivo fonte, mas com extensão .c
+- [ ]  Adicionar pelo menos 10 casos de testes com ERRO SEMÂNTICO (nome padrão ERR-SEM-XX.little).
 
 # Correções
 stmt -> `TODAS AS REGRAS ANTERIORES | call_expr ;`<br/>
