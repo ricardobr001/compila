@@ -1,4 +1,4 @@
-PROGRAM err_sem_04
+PROGRAM errsem04
 BEGIN
   FUNCTION VOID main()
   BEGIN
@@ -7,7 +7,7 @@ BEGIN
     INT pos , ta ;
     READ ( po , ta ) ;
 
-    res := pos * ta ;
+    res := pos *  ta ;
     WRITE ( res );
   END
 END

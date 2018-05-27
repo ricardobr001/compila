@@ -69,7 +69,6 @@ public class Compiler {
 			error.signal("Expected variable but found '" + lexer.getStringValue() + "'");
 		}
 		String var = lexer.getStringValue();
-
 		if(var_flag == VAR_DECL){
 			if (table.returnLocal(var) != null)
 				error.signal("Identifier " + var + " already used locally");
@@ -280,7 +279,10 @@ public class Compiler {
 
 	// id_list -> id id_tail
 	public void id_list(ArrayList<Variable> var, Symbol tipo){
-		var.add(new Variable(id(VAR_DECL), tipo, null));
+		//refactor: remove from local table
+		Variable v = new Variable(id(VAR_DECL), tipo, null);
+		var.add(v);
+		//table.putLocal(v.getVar(), '\0');
 		id_tail(var, tipo);
 	}
 
@@ -289,7 +291,9 @@ public class Compiler {
 		// Se for uma virgula
 		if (lexer.token == Symbol.COMMA){
 			lexer.nextToken();
-			var.add(new Variable(id(VAR_DECL), tipo, null));
+			Variable v = new Variable(id(VAR_DECL), tipo, null);
+			var.add(v);
+			//table.putLocal(v.getVar(), '\0');
 			id_tail(var, tipo);
 		}
 	}
