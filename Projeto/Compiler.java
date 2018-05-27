@@ -36,7 +36,7 @@ public class Compiler {
 		}
 
 		lexer.nextToken();
-		id();
+		id(true);
 
 		// Verifica se tem a palavra BEGIN depois do id
 		if (lexer.token != Symbol.BEGIN){
@@ -57,13 +57,27 @@ public class Compiler {
 	}
 
 	// id -> IDENT
-	public String id(){
+	public String id(boolean decl_flag){
 		// Verifica se é um IDENTIFICADOR
 		if (lexer.token != Symbol.IDENT){
 			error.signal("Expected variable but found '" + lexer.getStringValue() + "'");
 		}
-		//TODO VERIFY IF VARIABLE DECLARED
 		String var = lexer.getStringValue();
+
+		if(decl_flag == true){
+			if (table.returnLocal(var) != null)
+				error.signal("Identifier " + var + " already used locally");
+			else if( table.returnGlobal(var) != null)
+				error.signal("Identifier " + var + " already used globally ");
+			else if(table.returnFunc(var) != null)
+				error.signal("Identifier " + var + " already used as function name");
+		}else{//probably need some refactor
+			if( table.returnGlobal(var) != null)
+				error.signal("Identifier " + var + " is global constant, can't use in statement");
+			else if(table.returnFunc(var) != null)
+				error.signal("Identifier " + var + " is a function name, can't use in statement");
+		}
+
 		lexer.nextToken();
 
 		return var;
@@ -133,7 +147,7 @@ public class Compiler {
 		if (lexer.token == Symbol.STRING){
 			lexer.nextToken();
 
-			Variable var = new Variable(id(), Symbol.STRING, null);
+			Variable var = new Variable(id(true), Symbol.STRING, null);
 
 			// Análise semântica, verificamos se essa variavél ja foi declarada anteriormente
 			if (table.returnGlobal(var.getVar()) != null){
@@ -257,7 +271,7 @@ public class Compiler {
 
 	// id_list -> id id_tail
 	public void id_list(ArrayList<Variable> var, Symbol tipo){
-		var.add(new Variable(id(), tipo, null));
+		var.add(new Variable(id(true), tipo, null));
 		id_tail(var, tipo);
 	}
 
@@ -266,7 +280,7 @@ public class Compiler {
 		// Se for uma virgula
 		if (lexer.token == Symbol.COMMA){
 			lexer.nextToken();
-			var.add(new Variable(id(), tipo, null));
+			var.add(new Variable(id(true), tipo, null));
 			id_tail(var, tipo);
 		}
 	}
@@ -293,7 +307,7 @@ public class Compiler {
 	// param_decl -> var_type id
 	public Variable param_decl(){
 		Variable var = new Variable(null, var_type(), null);
-		var.setVar(id());
+		var.setVar(id(false)); //TODO verify local decalred variable has the same name as param
 		return var;
 	}
 
@@ -325,7 +339,9 @@ public class Compiler {
 		// Verifica se tem o FUNCTION
 		if (lexer.token == Symbol.FUNCTION){
 			lexer.nextToken();
-			Function func = new Function(any_type(), id(), null);
+			Function func = new Function(any_type(), id(true), null);
+
+			table.putFunc(func.getFuncName(), func.getTipoRetorno());
 			//id();
 
 			// Verifica se tem o '(' depois do function
@@ -413,7 +429,7 @@ public class Compiler {
 	// stmt -> id assign_stmt | read_stmt | write_stmt | return_stmt | if_stmt | for_stmt | id call_expr ;
 	public Statement stmt(){
 		if (lexer.token == Symbol.IDENT){
-			String temp = id();
+			String temp = id(false);
 
 			if (lexer.token == Symbol.LPAR){
 				CompositeExpr expression = new CompositeExpr(null, null, null);
@@ -471,11 +487,18 @@ public class Compiler {
 	// assign_stmt -> assign_expr ;
 	public void assign_stmt(Statement statement){
 		statement.setExpr(assign_expr());
+
 		//semantic: checks string assingnment
 		//can't assign any value to a constant
-		Variable v = (Variable)(table.returnGlobal(statement.getVar().getVar()));
-		// System.out.println(v.getTipo() + " __ " + statement.getVar());
-		if(v.getTipo() == Symbol.STRING && statement.getExpr().getEsquerda() != null){
+		Variable v;
+		try{
+			v = (Variable)(table.returnGlobal(statement.getVar().getVar()));
+		} catch (NullPointerException e){
+			v = null;
+		}
+
+		//System.out.println(v.getTipo() + " __ " + statement.getVar());
+		if(v != null && v.getTipo() == Symbol.STRING && statement.getExpr().getEsquerda() != null){
 			error.signal("Assignment to STRING '" + statement.getVar().getVar()  + "' forbidden. Can't assign new value to constant");
 		}
 		else if (lexer.token != Symbol.SEMICOLON){
@@ -725,7 +748,7 @@ public class Compiler {
 			primary(expression);
 		}
 		else if (lexer.token == Symbol.IDENT){
-			Variable var = new Variable(id(), null, null);
+			Variable var = new Variable(id(false), null, null);
 
 			if (expression.getEsquerda() == null){
 				expression.setEsquerda(new VariableExpr(var));
@@ -919,10 +942,10 @@ public class Compiler {
 		}
 		else if(lexer.token == Symbol.IDENT){
 			if (expression.getEsquerda() == null){
-				expression.setEsquerda(new VariableExpr(new Variable(id(), null, null)));
+				expression.setEsquerda(new VariableExpr(new Variable(id(false), null, null)));
 			}
 			else {
-				String ident = id();
+				String ident = id(false);
 				CompositeExpr temp = new CompositeExpr(null, null, null);
 				VariableExpr var = new VariableExpr(new Variable(ident, null, null));
 				temp.setEsquerda(var);
@@ -1085,7 +1108,7 @@ public class Compiler {
 
 		// Enquanto for declaração de variáveis no for, verifica as variáveis
 		while (lexer.token == Symbol.IDENT){
-			Variable var = new Variable(id(), Symbol.INT, null);
+			Variable var = new Variable(id(false), Symbol.INT, null);
 			CompositeExpr ce = assign_expr();
 
 			// Seta o novo Array
@@ -1114,7 +1137,7 @@ public class Compiler {
 
 		// Enquanto for um IDENT, chama o id() e assign_expr()
 		while(lexer.token == Symbol.IDENT){
-			Variable var = new Variable(id(), Symbol.INT, null);
+			Variable var = new Variable(id(false), Symbol.INT, null);
 			CompositeExpr ce = assign_expr();
 			// id();
 			// assign_expr();

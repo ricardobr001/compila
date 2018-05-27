@@ -117,7 +117,7 @@ Objetos criados no pacote AST
 
 #Geral  
 - [ ]  Gere automaticamente o código gerado usando o mesmo nome do arquivo fonte, mas com extensão .c
-- [ ]  Adicionar pelo menos 10 casos de testes com ERRO SEMÂNTICO (nome padrão ERR-SEM-XX.little).
+- [x]  Adicionar pelo menos 10 casos de testes com ERRO SEMÂNTICO (nome padrão ERR-SEM-XX.little).
 
 # Correções
 stmt -> `TODAS AS REGRAS ANTERIORES | call_expr ;`<br/>
@@ -132,3 +132,4 @@ Ou seja, toda chamada de `call_expr()` e `assign_expr()` precisa ter a chamada d
 # Observações
 `STRING` deve ser tratado como constante, não pode ser lido na função `READ`<br/>
 Obrigatóriamente o programa deve ter a função `int main()` sem parâmetros
+- Erro semântico conhecido: por falta de uma Hashtable local de parametro, pode haver parametros com mesmo nome de variaveis locais
