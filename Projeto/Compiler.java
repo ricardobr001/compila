@@ -10,6 +10,8 @@ public class Compiler {
 	private CompilerError error;
 	private SymbolTable table;
 	private int GLOBAL = 0, LOCAL = 1, EXISTS = 2;
+	private Function FUNC;
+	private Variable ATTR;
 
     public PgmBody compile( char []p_input ) {
 		error = new CompilerError(null);
@@ -504,24 +506,47 @@ public class Compiler {
 		if (lexer.token == Symbol.IDENT){
 			String temp = id();
 
-			if (lexer.token == Symbol.LPAR){
-				CompositeExpr expression = new CompositeExpr(null, null, null);
-				call_expr(expression);	//call_expr -> id ( {expr_list} )
+			// Procuramos a variavel para ver se está ja foi declarada
+			Variable localVar = (Variable) table.returnLocal(temp);
+			Variable globalVar = (Variable) table.returnGlobal(temp);
+			Variable exist;
 
-				if (lexer.token != Symbol.SEMICOLON) {
-					error.signal("Expected ;");
+			if (localVar != null){
+				exist = localVar;
+			}
+			else if (globalVar != null) {
+				exist = globalVar;
+			}
+			else {
+				exist = null;
+			}
+
+			// Verificamos se a variavel foi encontrada
+			if (exist != null){
+				ATTR = exist;
+				if (lexer.token == Symbol.LPAR){
+					CompositeExpr expression = new CompositeExpr(null, null, null);
+					call_expr(expression);	//call_expr -> id ( {expr_list} )
+	
+					if (lexer.token != Symbol.SEMICOLON) {
+						error.signal("Expected ;");
+					}
+	
+					lexer.nextToken();
 				}
-
-				lexer.nextToken();
+				else if (lexer.token == Symbol.ASSIGN){
+					Statement statement = new AssignStatement(new Variable(temp, null, null), null);
+	
+					assign_stmt(statement);		//assign_stmt -> assign_expr ;
+					return statement;			//assign_expr -> id := expr
+				}
+				else{
+					error.signal("Expected ':=' ou '(' but found '" + lexer.getStringValue() + "'");
+				}
 			}
-			else if (lexer.token == Symbol.ASSIGN){
-				Statement statement = new AssignStatement(new Variable(temp, null, null), null);
-
-				assign_stmt(statement);		//assign_stmt -> assign_expr ;
-				return statement;			//assign_expr -> id := expr
-			}
+			// Caso não seja encontrado, avisamos que a variavel nao foi declarada
 			else{
-				error.signal("Expected ':=' ou '(' but found '" + lexer.getStringValue() + "'");
+				error.signal("Error, variable '" + temp + "' has not been declared");
 			}
 		}
 		else if (lexer.token == Symbol.READ){
@@ -756,7 +781,7 @@ public class Compiler {
 	public void factor_tail(CompositeExpr expression){
 		if (lexer.token == Symbol.MULT || lexer.token == Symbol.DIV){
 			if (expression.getDireita() == null){
-				addop(expression);
+				mulop(expression);
 			}
 			else {
 				CompositeExpr temp = (CompositeExpr) expression.getDireita();
@@ -808,7 +833,37 @@ public class Compiler {
 			primary(expression);
 		}
 		else if (lexer.token == Symbol.IDENT){
-			Variable var = new Variable(id(), null, null);
+			String ident = id();
+
+			// Procuramos a variavel para ver se está ja foi declarada
+			Variable localVar = (Variable) table.returnLocal(ident);
+			Variable globalVar = (Variable) table.returnGlobal(ident);
+			Variable exist;
+
+			if (localVar != null){
+				exist = localVar;
+			}
+			else if (globalVar != null) {
+				exist = globalVar;
+			}
+			else {
+				exist = null;
+			}
+
+			// Se a variavel não tiver sido declarada, lança um erro
+			if (exist == null){
+				error.signal("Error, variable '" + ident + "' has not been declared");
+			}
+
+			System.out.println("ATTR " + ATTR.getTipo());
+			System.out.println("exist " + exist.getTipo());
+			// Se o tipo de atribuição for incorreto, lança um erro
+			if (ATTR.getTipo() != exist.getTipo()){
+				error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "' incompatible types");
+			}
+
+			// Se tudo estiver correto, continua normalmente
+			Variable var = new Variable(ident, null, null);
 
 			if (expression.getEsquerda() == null){
 				expression.setEsquerda(new VariableExpr(var));
@@ -1013,6 +1068,11 @@ public class Compiler {
 			}
 		}
 		else if(lexer.token == Symbol.INTLITERAL){
+
+			if (ATTR.getTipo() != Symbol.INTLITERAL){
+				error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "' but found 'INT'");
+			}
+
 			if (expression.getEsquerda() == null){
 				expression.setEsquerda(new IntNumberExpr(lexer.getIntValue()));
 			}

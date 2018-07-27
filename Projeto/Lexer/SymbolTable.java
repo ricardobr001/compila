@@ -1,16 +1,18 @@
 package Lexer;
 
 import java.util.Hashtable;
+import AST.Variable;
+import AST.Function;
 
 public class SymbolTable{
-    private Hashtable localVariableTable;
-    private Hashtable globalVariableTable;
-    private Hashtable functions;
+    private Hashtable<String, Object> localVariableTable;
+    private Hashtable<String, Object> globalVariableTable;
+    private Hashtable<String, Object> functions;
 
     public SymbolTable(){
-        this.localVariableTable = new Hashtable();
-        this.globalVariableTable = new Hashtable();
-        this.functions = new Hashtable();
+        this.localVariableTable = new Hashtable<String, Object>();
+        this.globalVariableTable = new Hashtable<String, Object>();
+        this.functions = new Hashtable<String, Object>();
     }
 
     // Limpa tabela de variáveis locais

@@ -12,7 +12,7 @@ public class Main {
         // Flag
         // true imprime erros do java
         // false não imprime erros do java, somente erros da little
-        boolean DEBUG = false;
+        boolean DEBUG = true;
 
         if (args.length != 1){
             System.out.println("Usage:\njava Main <input> [output]");

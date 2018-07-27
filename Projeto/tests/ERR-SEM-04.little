@@ -5,7 +5,7 @@ BEGIN
     -- Wrong type assignment
     FLOAT res ;
     INT pos , ta ;
-    READ ( po , ta ) ;
+    READ ( pos , ta ) ;
 
     res := pos *  ta ;
     WRITE ( res );
