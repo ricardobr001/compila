@@ -26,7 +26,7 @@ public class Function{
         else if (tipoRetorno == Symbol.VOID){
             pw.print("void " + this.nomeFuncao + "(");
         }
-
+       
         for (int i = 0 ; i < parametros.size() ; i++){
             if (i + 1 == parametros.size()){
                 if (parametros.get(i).getTipo() == Symbol.INT){
@@ -57,8 +57,8 @@ public class Function{
         // Decrementa a tabulação e fecha a função
         pw.sub();
         pw.println("}");
-
-
+        
+        
     }
 
     public void setParametros(ArrayList<Variable> var){
@@ -69,11 +69,7 @@ public class Function{
         this.corpo = corpo;
     }
 
-    public String getFuncName(){
+    public String getNome(){
         return this.nomeFuncao;
-    }
-
-    public Symbol getTipoRetorno(){
-        return this.tipoRetorno;
     }
 }

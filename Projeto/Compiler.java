@@ -3,35 +3,30 @@ import Error.*;
 import AST.*;
 import java.util.*;
 
-
 public class Compiler {
-	//constantes
-	public static final int PARAM = 2;
-	public static final int VAR_DECL = 1;
-	public static final int NOT_DECL = 0;
-
 	// para geracao de codigo
 	public static final boolean GC = false;
 	private Lexer lexer;
 	private CompilerError error;
 	private SymbolTable table;
+	private int GLOBAL = 0, LOCAL = 1, EXISTS = 2;
 
     public PgmBody compile( char []p_input ) {
-			error = new CompilerError(null);
-			lexer = new Lexer(p_input, error);
-			table = new SymbolTable();
-			error.setLexer(lexer);
-	    lexer.nextToken();
-	    PgmBody pg = program();
+		error = new CompilerError(null);
+		lexer = new Lexer(p_input, error);
+		table = new SymbolTable();
+		error.setLexer(lexer);
+        lexer.nextToken();
+        PgmBody pg = program();
 
-	    if (lexer.token != Symbol.EOF)
-				error.signal("Didn't find the end of the file");
+        if (lexer.token != Symbol.EOF)
+			error.signal("Didn't find the end of the file");
 
-			return pg;
+		return pg;
     }
 
 	/* =================================================*/
-	/* 						Program																*/
+	/* 						Program						*/
 	/* =================================================*/
 
     // Program -> 'PROGRAM' id 'BEGIN' pgm_body 'END'
@@ -42,7 +37,7 @@ public class Compiler {
 		}
 
 		lexer.nextToken();
-		id(VAR_DECL);
+		id();
 
 		// Verifica se tem a palavra BEGIN depois do id
 		if (lexer.token != Symbol.BEGIN){
@@ -63,29 +58,13 @@ public class Compiler {
 	}
 
 	// id -> IDENT
-	public String id(int var_flag){ //2 = param, 1 = var dec, 0 = not var dec
+	public String id(){
 		// Verifica se é um IDENTIFICADOR
 		if (lexer.token != Symbol.IDENT){
 			error.signal("Expected variable but found '" + lexer.getStringValue() + "'");
 		}
-		String var = lexer.getStringValue();
-		if(var_flag == VAR_DECL){
-			if (table.returnLocal(var) != null)
-				error.signal("Identifier " + var + " already used locally");
-			else if( table.returnGlobal(var) != null)
-				error.signal("Identifier " + var + " already used globally ");
-			else if(table.returnFunc(var) != null)
-				error.signal("Identifier " + var + " already used as function name");
-		}else if (var_flag == NOT_DECL){//probably need some refactor
-			if( table.returnGlobal(var) != null)
-				error.signal("Identifier " + var + " is global constant, can't use in statement");
-			else if(table.returnFunc(var) != null)
-				error.signal("Identifier " + var + " is a function name, can't use in statement");
-			//verify if variable is declared when used as stmt
-			else if(table.returnLocal(var) == null)
-				error.signal("Variable " + var + " was not declared");
-		}
 
+		String var = lexer.getStringValue();
 		lexer.nextToken();
 
 		return var;
@@ -95,15 +74,15 @@ public class Compiler {
 	public PgmBody pgm_body(){
 		ArrayList<Variable> var = new ArrayList<Variable>();
 		ArrayList<Function> func = new ArrayList<Function>();
-
+		
 		//flag de variavel global
-		decl(var, true);
+		decl(var, GLOBAL);
 		func_declarations(func);
 		return new PgmBody(var, func);
 	}
 
 	// decl -> string_decl_list {decl} | var_decl_list {decl} | empty
-	public void decl(ArrayList<Variable> var, boolean flag){
+	public void decl(ArrayList<Variable> var, int flag){
 		// Verifica se é uma string
 		if (lexer.token == Symbol.STRING){
 			string_decl_list(var, flag);
@@ -123,21 +102,24 @@ public class Compiler {
 	}
 
 	/* =================================================*/
-	/* 				Global String Declaration									*/
+	/* 				Global String Declaration			*/
 	/* =================================================*/
 
 	// true -> variavel global
 	// false -> variavel local
 	// string_decl_list -> string_decl {string_decl_tail}
-	public void string_decl_list(ArrayList<Variable> var, boolean flag){
+	public void string_decl_list(ArrayList<Variable> var, int flag){
 		// Verifica se é uma string
 		if (lexer.token == Symbol.STRING){
 			Variable str = string_decl();
 
-			if (flag){
+			// Se a chamada veio de uma declaração global
+			if (flag == GLOBAL){
+				// Insere na tabela global
 				table.putGlobal(str.getVar(), str);
 			}
-			else {
+			else if (flag == LOCAL){
+				// Caso contrário na tabela da função local
 				table.putLocal(str.getVar(), str);
 			}
 
@@ -155,13 +137,15 @@ public class Compiler {
 		if (lexer.token == Symbol.STRING){
 			lexer.nextToken();
 
-			Variable var = new Variable(id(VAR_DECL), Symbol.STRING, null);
+			Variable var = new Variable(id(), Symbol.STRING, null);
 
 			// Análise semântica, verificamos se essa variavél ja foi declarada anteriormente
+			// Verificando se ela existe na tabela de variáveis globais
 			if (table.returnGlobal(var.getVar()) != null){
 				error.signal("Error, variable '" + var.getVar() + "' has already been declared as global variable");
 			}
 
+			// Verificando se ela existe na tabela de variáveis locais
 			if (table.returnLocal(var.getVar()) != null){
 				error.signal("Error, variable '" + var.getVar() + "' has already been declared as local variable");
 			}
@@ -194,7 +178,7 @@ public class Compiler {
 			return str;
 		}
 		else {
-			error.signal("erro na string");
+			error.signal("Error in the string");
 		}
 
 		return null;
@@ -203,13 +187,15 @@ public class Compiler {
 	// true -> variavel global
 	// false -> variavel local
 	// str_decl_tail -> string_decl {string_decl_tail}
-	public void string_decl_tail(ArrayList<Variable> var, boolean flag){
+	public void string_decl_tail(ArrayList<Variable> var, int flag){
 		Variable str = string_decl();
 
-		if (flag){
+		// Se a chamada veio de uma declaração global insere na tabela de variaveis globais
+		if (flag == GLOBAL){
 			table.putGlobal(str.getVar(), str);
 		}
 		else {
+			// Caso contrário na tabela da função local
 			table.putLocal(str.getVar(), str);
 		}
 
@@ -225,19 +211,19 @@ public class Compiler {
 	/* =================================================*/
 
 	// var_decl_list -> var_decl {var_decl_tail}
-	public void var_decl_list(ArrayList<Variable> var, boolean flag){
-		var_decl(var);
+	public void var_decl_list(ArrayList<Variable> var, int flag){
+		var_decl(var, flag);
 
 		if (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
-			var_decl_tail(var);
+			var_decl_tail(var, flag);
 		}
 	}
 
 	// var_decl -> var_type id_list ; | empty
-	public void var_decl(ArrayList<Variable> var){
+	public void var_decl(ArrayList<Variable> var, int flag){
 		if (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
 			Symbol tipo = var_type();
-			id_list(var, tipo);
+			id_list(var, tipo, flag);
 
 			// Verificando se tem o ;
 			if (lexer.token != Symbol.SEMICOLON){
@@ -278,32 +264,102 @@ public class Compiler {
 	}
 
 	// id_list -> id id_tail
-	public void id_list(ArrayList<Variable> var, Symbol tipo){
-		//refactor: remove from local table
-		Variable v = new Variable(id(VAR_DECL), tipo, null);
-		var.add(v);
-		//table.putLocal(v.getVar(), '\0');
-		id_tail(var, tipo);
+	public void id_list(ArrayList<Variable> var, Symbol tipo, int flag){
+
+		Variable nova = new Variable(id(), tipo, null);
+
+		// Se a chamada for na declaração da variável
+		if (flag != EXISTS){
+			// Análise semântica, verificamos se essa variavél ja foi declarada anteriormente
+			// Verificando se ela existe na tabela de variáveis globais
+			if (table.returnGlobal(nova.getVar()) != null){
+				error.signal("Error, variable '" + nova.getVar() + "' has already been declared as global variable");
+			}
+
+			// Verificando se ela existe na tabela de variáveis locais
+			if (table.returnLocal(nova.getVar()) != null){
+				error.signal("Error, variable '" + nova.getVar() + "' has already been declared as local variable");
+			}
+
+			// Se a chamada veio de uma declaração global insere na tabela de variaveis globais
+			if (flag == GLOBAL){			
+				table.putGlobal(nova.getVar(), nova);
+			}
+			else if (flag == LOCAL){
+				// Caso contrário na local
+				table.putLocal(nova.getVar(), nova);
+			}
+
+			var.add(nova);
+		}
+		// Se a chamada for na verificação, ou seja, ver se a variável ja foi declarada
+		else {
+			Variable exist = (Variable) table.returnLocal(nova.getVar());
+
+			//System.out.println("Oi\n\n" + teste.getVar() + "\n" + teste.getValor() + "\n" + teste.getTipo());
+			if (table.returnLocal(nova.getVar()) == null && table.returnGlobal(nova.getVar()) == null){
+				error.signal("Error, variable '" + nova.getVar() + "' has not been declared");
+			}
+			
+			var.add(exist);
+		}
+
+		id_tail(var, tipo, flag);
 	}
 
 	// id_tail -> , id id_tail | empty
-	public void id_tail(ArrayList<Variable> var, Symbol tipo){
+	public void id_tail(ArrayList<Variable> var, Symbol tipo, int flag){
 		// Se for uma virgula
 		if (lexer.token == Symbol.COMMA){
 			lexer.nextToken();
-			Variable v = new Variable(id(VAR_DECL), tipo, null);
-			var.add(v);
-			//table.putLocal(v.getVar(), '\0');
-			id_tail(var, tipo);
+
+			Variable nova = new Variable(id(), tipo, null);
+
+			if (flag != EXISTS){
+				// Análise semântica, verificamos se essa variavél ja foi declarada anteriormente
+				// Verificando se ela existe na tabela de variáveis globais
+				if (table.returnGlobal(nova.getVar()) != null){
+					error.signal("Error, variable '" + nova.getVar() + "' has already been declared as global variable");
+				}
+
+				// Verificando se ela existe na tabela de variáveis locais
+				if (table.returnLocal(nova.getVar()) != null){
+					error.signal("Error, variable '" + nova.getVar() + "' has already been declared as local variable");
+				}
+
+				// Se a chamada veio de uma declaração global insere na tabela de variaveis globais
+				if (flag == GLOBAL){			
+					table.putGlobal(nova.getVar(), nova);
+				}
+				else if (flag == LOCAL){
+					// Caso contrário na local
+					table.putLocal(nova.getVar(), nova);
+				}
+
+				var.add(nova);
+			}
+			// Se a chamada for na verificação, ou seja, ver se a variável ja foi declarada
+			else {
+				Variable exist = (Variable) table.returnLocal(nova.getVar());
+
+				//System.out.println("Oi\n\n" + teste.getVar() + "\n" + teste.getValor() + "\n" + teste.getTipo());
+				if (table.returnLocal(nova.getVar()) == null && table.returnGlobal(nova.getVar()) == null){
+					error.signal("Error, variable '" + nova.getVar() + "' has not been declared");
+				}
+				
+				var.add(exist);
+			}
+			//var.add(new Variable(id(), tipo, null));
+			id_tail(var, tipo, flag);
 		}
 	}
 
 	// var_decl_tail -> var_decl {var_decl_tail}
-	public void var_decl_tail(ArrayList<Variable> var){
-		var_decl(var);
+	public void var_decl_tail(ArrayList<Variable> var, int flag){
+		var_decl(var, flag);
 
 		if (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
-			var_decl_tail(var);
+			var_decl_tail(var, flag);
 		}
 	}
 
@@ -320,9 +376,7 @@ public class Compiler {
 	// param_decl -> var_type id
 	public Variable param_decl(){
 		Variable var = new Variable(null, var_type(), null);
-		var.setVar(id(PARAM));
-		//System.out.println(var.getVar() + " ---- " + var.getValor());
-		table.putLocal(var.getVar(), '\0'); //'\0' as value, since param dont have splicit value when declared
+		var.setVar(id());
 		return var;
 	}
 
@@ -354,9 +408,7 @@ public class Compiler {
 		// Verifica se tem o FUNCTION
 		if (lexer.token == Symbol.FUNCTION){
 			lexer.nextToken();
-			Function func = new Function(any_type(), id(VAR_DECL), null);
-
-			table.putFunc(func.getFuncName(), func.getTipoRetorno());
+			Function func = new Function(any_type(), id(), null);
 			//id();
 
 			// Verifica se tem o '(' depois do function
@@ -371,6 +423,13 @@ public class Compiler {
 				param_decl_list(var);
 			}
 			func.setParametros(var);
+
+			// Se for a função main, não pode ter parametros
+			if (func.getNome().equals("main")){
+				if (!var.isEmpty()){
+					error.signal("Error, the main function should not have any parameters");
+				}	
+			}
 
 			// Verifica se tem o ')' depois do param_decl_list
 			if (lexer.token != Symbol.RPAR){
@@ -414,7 +473,7 @@ public class Compiler {
 		ArrayList<Statement> statement = new ArrayList<Statement>();
 
 		//flag de variavel local
-		decl(var, false);
+		decl(var, LOCAL);
 		stmt_list(statement);
 
 		return new FunctionBody(var, statement);
@@ -438,13 +497,12 @@ public class Compiler {
 			statement.add(stmt());
 			stmt_tail(statement);
 		}
-
 	}
 
 	// stmt -> id assign_stmt | read_stmt | write_stmt | return_stmt | if_stmt | for_stmt | id call_expr ;
 	public Statement stmt(){
 		if (lexer.token == Symbol.IDENT){
-			String temp = id(NOT_DECL);
+			String temp = id();
 
 			if (lexer.token == Symbol.LPAR){
 				CompositeExpr expression = new CompositeExpr(null, null, null);
@@ -503,20 +561,7 @@ public class Compiler {
 	public void assign_stmt(Statement statement){
 		statement.setExpr(assign_expr());
 
-		//semantic: checks string assingnment
-		//can't assign any value to a constant
-		Variable v;
-		try{
-			v = (Variable)(table.returnGlobal(statement.getVar().getVar()));
-		} catch (NullPointerException e){
-			v = null;
-		}
-
-		//System.out.println(v.getTipo() + " __ " + statement.getVar());
-		if(v != null && v.getTipo() == Symbol.STRING && statement.getExpr().getEsquerda() != null){
-			error.signal("Assignment to STRING '" + statement.getVar().getVar()  + "' forbidden. Can't assign new value to constant");
-		}
-		else if (lexer.token != Symbol.SEMICOLON){
+		if (lexer.token != Symbol.SEMICOLON){
 			error.signal("Expected ';' but found '" + lexer.getStringValue() + "'");
 		}
 
@@ -555,7 +600,7 @@ public class Compiler {
 		// 	error.signal("Expected variavel");
 		// }
 
-		id_list(statement.getArrayVar(), tipo);
+		id_list(statement.getArrayVar(), tipo, EXISTS);
 
 		if (lexer.token != Symbol.RPAR){
 			error.signal("Expected ')' but found '" + lexer.getStringValue() + "'");
@@ -587,7 +632,7 @@ public class Compiler {
 		// if (lexer.token != Symbol.IDENT)
 		// 	error.signal("Expected variavel");
 		Symbol tipo = Symbol.INT;
-		id_list(statement.getArrayVar(), tipo);
+		id_list(statement.getArrayVar(), tipo, EXISTS);
 
 		if (lexer.token != Symbol.RPAR){
 			error.signal("Expected ')' but found '" + lexer.getStringValue() + "'");
@@ -763,7 +808,7 @@ public class Compiler {
 			primary(expression);
 		}
 		else if (lexer.token == Symbol.IDENT){
-			Variable var = new Variable(id(NOT_DECL), null, null);
+			Variable var = new Variable(id(), null, null);
 
 			if (expression.getEsquerda() == null){
 				expression.setEsquerda(new VariableExpr(var));
@@ -788,7 +833,7 @@ public class Compiler {
 
 			if (lexer.token == Symbol.LPAR){
 				call_expr(expression);
-			}
+			}			
 		}
 	}
 
@@ -957,10 +1002,10 @@ public class Compiler {
 		}
 		else if(lexer.token == Symbol.IDENT){
 			if (expression.getEsquerda() == null){
-				expression.setEsquerda(new VariableExpr(new Variable(id(NOT_DECL), null, null)));
+				expression.setEsquerda(new VariableExpr(new Variable(id(), null, null)));
 			}
 			else {
-				String ident = id(NOT_DECL);
+				String ident = id();
 				CompositeExpr temp = new CompositeExpr(null, null, null);
 				VariableExpr var = new VariableExpr(new Variable(ident, null, null));
 				temp.setEsquerda(var);
@@ -975,7 +1020,7 @@ public class Compiler {
 				CompositeExpr temp = new CompositeExpr(new IntNumberExpr(lexer.getIntValue()), null, null);
 				expression.setDireita(temp);
 			}
-
+			
 			lexer.nextToken();
 		}
 		else{
@@ -986,7 +1031,7 @@ public class Compiler {
 				CompositeExpr temp = new CompositeExpr(new FloatNumberExpr(lexer.getFloatValue()), null, null);
 				expression.setDireita(temp);
 			}
-
+			
 			lexer.nextToken();
 		}
 	}
@@ -1123,7 +1168,7 @@ public class Compiler {
 
 		// Enquanto for declaração de variáveis no for, verifica as variáveis
 		while (lexer.token == Symbol.IDENT){
-			Variable var = new Variable(id(NOT_DECL), Symbol.INT, null);
+			Variable var = new Variable(id(), Symbol.INT, null);
 			CompositeExpr ce = assign_expr();
 
 			// Seta o novo Array
@@ -1152,7 +1197,7 @@ public class Compiler {
 
 		// Enquanto for um IDENT, chama o id() e assign_expr()
 		while(lexer.token == Symbol.IDENT){
-			Variable var = new Variable(id(NOT_DECL), Symbol.INT, null);
+			Variable var = new Variable(id(), Symbol.INT, null);
 			CompositeExpr ce = assign_expr();
 			// id();
 			// assign_expr();

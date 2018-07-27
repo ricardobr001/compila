@@ -33,12 +33,4 @@ public class SymbolTable{
     public void putGlobal(String chave, Object valor){
         this.globalVariableTable.put(chave, valor);
     }
-
-    public void putFunc(String chave, Object valor){
-        this.functions.put(chave, valor);
-    }
-
-    public Object returnFunc(String chave){
-        return this.functions.get(chave);
-    }
 }
