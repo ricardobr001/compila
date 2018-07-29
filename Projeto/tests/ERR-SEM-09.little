@@ -1,14 +1,15 @@
 PROGRAM errsem09
 BEGIN
-  FUNCTION VOID main()
-  BEGIN
-    FLOAT somenumber ;
-    --There isn't any var type to keep condition values
-    somenumber := ( sum ( 3 , 4 ) != 7) ;
-  END
+	FUNCTION INT sum (INT a, INT b)
+	BEGIN
+		RETURN a + b ;
+	END
 
-  FUNCTION INT sum (INT a, INT b)
-  BEGIN
-    RETURN a + b ;
-  END
+	FUNCTION VOID main()
+	BEGIN
+		FLOAT somenumber ;
+
+		--There isn't any var type to keep condition values
+		somenumber := ( sum ( 3 , 4 ) != 7) ;
+	END
 END

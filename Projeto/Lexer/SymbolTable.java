@@ -7,12 +7,12 @@ import AST.Function;
 public class SymbolTable{
     private Hashtable<String, Object> localVariableTable;
     private Hashtable<String, Object> globalVariableTable;
-    private Hashtable<String, Object> functions;
+    private Hashtable<String, Object> functionTable;
 
     public SymbolTable(){
         this.localVariableTable = new Hashtable<String, Object>();
         this.globalVariableTable = new Hashtable<String, Object>();
-        this.functions = new Hashtable<String, Object>();
+        this.functionTable = new Hashtable<String, Object>();
     }
 
     // Limpa tabela de variáveis locais
@@ -28,11 +28,19 @@ public class SymbolTable{
         return this.globalVariableTable.get(chave);
     }
 
+    public Object returnFunction(String chave){
+        return this.functionTable.get(chave);
+    }
+
     public void putLocal(String chave, Object valor){
         this.localVariableTable.put(chave, valor);
     }
 
     public void putGlobal(String chave, Object valor){
         this.globalVariableTable.put(chave, valor);
+    }
+
+    public void putFunction(String chave, Object valor){
+        this.functionTable.put(chave, valor);
     }
 }

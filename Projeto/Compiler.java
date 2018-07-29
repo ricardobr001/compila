@@ -9,8 +9,12 @@ public class Compiler {
 	private Lexer lexer;
 	private CompilerError error;
 	private SymbolTable table;
-	private int GLOBAL = 0, LOCAL = 1, EXISTS = 2;
-	private Function FUNC;
+	private int FLAG;
+	private int contParamFuncIf;
+	private int GLOBAL = 0, LOCAL= 1, EXISTS = 2, RETURN = 3, ASSIGNWRITE = 4, IF = 5;
+	private boolean FIRSTIF, FECHOUPAR;
+	private Symbol TYPEIF;
+	private Function FUNC, FUNCIF, CALLFUNC;
 	private Variable ATTR;
 
     public PgmBody compile( char []p_input ) {
@@ -32,7 +36,7 @@ public class Compiler {
 	/* =================================================*/
 
     // Program -> 'PROGRAM' id 'BEGIN' pgm_body 'END'
-    public PgmBody program(){
+	public PgmBody program(){
 		// Verifica se começou com a palavra PROGRAM
 		if (lexer.token != Symbol.PROGRAM){
 			error.signal("Expected 'PROGRAM' but found '" + lexer.getStringValue() + "'\nFirst word should be 'PROGRAM'");
@@ -78,27 +82,34 @@ public class Compiler {
 		ArrayList<Function> func = new ArrayList<Function>();
 		
 		//flag de variavel global
-		decl(var, GLOBAL);
+		FLAG = GLOBAL;
+		decl(var);
 		func_declarations(func);
+
+		// Verificando se existe a função main
+		if (table.returnFunction("main") == null){
+			error.signal("Error, the program must have a function called 'main'");
+		}
+
 		return new PgmBody(var, func);
 	}
 
 	// decl -> string_decl_list {decl} | var_decl_list {decl} | empty
-	public void decl(ArrayList<Variable> var, int flag){
+	public void decl(ArrayList<Variable> var){
 		// Verifica se é uma string
 		if (lexer.token == Symbol.STRING){
-			string_decl_list(var, flag);
+			string_decl_list(var);
 
 			if (lexer.token == Symbol.STRING || lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
-				decl(var, flag);
+				decl(var);
 			}
 		}
 		// Verifica se é uma variável
 		else if (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
-			var_decl_list(var, flag);
+			var_decl_list(var);
 
 			if (lexer.token == Symbol.STRING || lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
-				decl(var, flag);
+				decl(var);
 			}
 		}
 	}
@@ -110,17 +121,17 @@ public class Compiler {
 	// true -> variavel global
 	// false -> variavel local
 	// string_decl_list -> string_decl {string_decl_tail}
-	public void string_decl_list(ArrayList<Variable> var, int flag){
+	public void string_decl_list(ArrayList<Variable> var){
 		// Verifica se é uma string
 		if (lexer.token == Symbol.STRING){
 			Variable str = string_decl();
 
 			// Se a chamada veio de uma declaração global
-			if (flag == GLOBAL){
+			if (FLAG == GLOBAL){
 				// Insere na tabela global
 				table.putGlobal(str.getVar(), str);
 			}
-			else if (flag == LOCAL){
+			else if (FLAG == LOCAL){
 				// Caso contrário na tabela da função local
 				table.putLocal(str.getVar(), str);
 			}
@@ -128,7 +139,7 @@ public class Compiler {
 			var.add(str);
 
 			if (lexer.token == Symbol.STRING){
-				string_decl_tail(var, flag);
+				string_decl_tail(var);
 			}
 		}
 	}
@@ -189,11 +200,11 @@ public class Compiler {
 	// true -> variavel global
 	// false -> variavel local
 	// str_decl_tail -> string_decl {string_decl_tail}
-	public void string_decl_tail(ArrayList<Variable> var, int flag){
+	public void string_decl_tail(ArrayList<Variable> var){
 		Variable str = string_decl();
 
 		// Se a chamada veio de uma declaração global insere na tabela de variaveis globais
-		if (flag == GLOBAL){
+		if (FLAG == GLOBAL){
 			table.putGlobal(str.getVar(), str);
 		}
 		else {
@@ -204,7 +215,7 @@ public class Compiler {
 		var.add(str);
 
 		if (lexer.token == Symbol.STRING){
-			string_decl_tail(var, flag);
+			string_decl_tail(var);
 		}
 	}
 
@@ -213,19 +224,19 @@ public class Compiler {
 	/* =================================================*/
 
 	// var_decl_list -> var_decl {var_decl_tail}
-	public void var_decl_list(ArrayList<Variable> var, int flag){
-		var_decl(var, flag);
+	public void var_decl_list(ArrayList<Variable> var){
+		var_decl(var);
 
 		if (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
-			var_decl_tail(var, flag);
+			var_decl_tail(var);
 		}
 	}
 
 	// var_decl -> var_type id_list ; | empty
-	public void var_decl(ArrayList<Variable> var, int flag){
+	public void var_decl(ArrayList<Variable> var){
 		if (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
 			Symbol tipo = var_type();
-			id_list(var, tipo, flag);
+			id_list(var, tipo);
 
 			// Verificando se tem o ;
 			if (lexer.token != Symbol.SEMICOLON){
@@ -266,12 +277,12 @@ public class Compiler {
 	}
 
 	// id_list -> id id_tail
-	public void id_list(ArrayList<Variable> var, Symbol tipo, int flag){
+	public void id_list(ArrayList<Variable> var, Symbol tipo){
 
 		Variable nova = new Variable(id(), tipo, null);
 
 		// Se a chamada for na declaração da variável
-		if (flag != EXISTS){
+		if (FLAG != EXISTS){
 			// Análise semântica, verificamos se essa variavél ja foi declarada anteriormente
 			// Verificando se ela existe na tabela de variáveis globais
 			if (table.returnGlobal(nova.getVar()) != null){
@@ -284,10 +295,10 @@ public class Compiler {
 			}
 
 			// Se a chamada veio de uma declaração global insere na tabela de variaveis globais
-			if (flag == GLOBAL){			
+			if (FLAG == GLOBAL){
 				table.putGlobal(nova.getVar(), nova);
 			}
-			else if (flag == LOCAL){
+			else if (FLAG == LOCAL){
 				// Caso contrário na local
 				table.putLocal(nova.getVar(), nova);
 			}
@@ -306,18 +317,18 @@ public class Compiler {
 			var.add(exist);
 		}
 
-		id_tail(var, tipo, flag);
+		id_tail(var, tipo);
 	}
 
 	// id_tail -> , id id_tail | empty
-	public void id_tail(ArrayList<Variable> var, Symbol tipo, int flag){
+	public void id_tail(ArrayList<Variable> var, Symbol tipo){
 		// Se for uma virgula
 		if (lexer.token == Symbol.COMMA){
 			lexer.nextToken();
 
 			Variable nova = new Variable(id(), tipo, null);
 
-			if (flag != EXISTS){
+			if (FLAG != EXISTS){
 				// Análise semântica, verificamos se essa variavél ja foi declarada anteriormente
 				// Verificando se ela existe na tabela de variáveis globais
 				if (table.returnGlobal(nova.getVar()) != null){
@@ -330,10 +341,10 @@ public class Compiler {
 				}
 
 				// Se a chamada veio de uma declaração global insere na tabela de variaveis globais
-				if (flag == GLOBAL){			
+				if (FLAG == GLOBAL){
 					table.putGlobal(nova.getVar(), nova);
 				}
-				else if (flag == LOCAL){
+				else if (FLAG == LOCAL){
 					// Caso contrário na local
 					table.putLocal(nova.getVar(), nova);
 				}
@@ -352,16 +363,16 @@ public class Compiler {
 				var.add(exist);
 			}
 			//var.add(new Variable(id(), tipo, null));
-			id_tail(var, tipo, flag);
+			id_tail(var, tipo);
 		}
 	}
 
 	// var_decl_tail -> var_decl {var_decl_tail}
-	public void var_decl_tail(ArrayList<Variable> var, int flag){
-		var_decl(var, flag);
+	public void var_decl_tail(ArrayList<Variable> var){
+		var_decl(var);
 
 		if (lexer.token == Symbol.FLOAT || lexer.token == Symbol.INT){
-			var_decl_tail(var, flag);
+			var_decl_tail(var);
 		}
 	}
 
@@ -371,7 +382,12 @@ public class Compiler {
 
 	// param_decl_list -> param_decl param_decl_tail
 	public void param_decl_list(ArrayList<Variable> var){
-		var.add(param_decl());
+		Variable temp = param_decl();
+
+		// Adicionando a variavel do parametro na tabela para analise semântica
+		table.putLocal(temp.getVar(), temp);
+
+		var.add(temp);
 		param_decl_tail(var);
 	}
 
@@ -387,7 +403,13 @@ public class Compiler {
 		// Verifica se é uma virgula
 		if (lexer.token == Symbol.COMMA){
 			lexer.nextToken();
-			var.add(param_decl());
+
+			Variable temp = param_decl();
+
+			// Adicionando a variavel do parametro na tabela para analise semântica
+			table.putLocal(temp.getVar(), temp);
+
+			var.add(temp);
 			param_decl_tail(var);
 		}
 	}
@@ -398,7 +420,17 @@ public class Compiler {
 
 	// func_declarations -> func_decl {func_decl_tail}
 	public void func_declarations(ArrayList<Function> func){
-		func.add(func_decl());
+		Function temp = func_decl();
+
+		if (temp != null) {
+			// Salvando a nova função na tabela para analise semantica
+			table.putFunction(temp.getNome(), temp);
+		}
+
+		func.add(temp);
+
+		// Limpando a tabela de variaveis locais para a próxima função
+		table.resetLocal();
 
 		if (lexer.token == Symbol.FUNCTION){
 			func_decl_tail(func);
@@ -411,6 +443,8 @@ public class Compiler {
 		if (lexer.token == Symbol.FUNCTION){
 			lexer.nextToken();
 			Function func = new Function(any_type(), id(), null);
+
+			FUNC = new Function(func.getTipo(), func.getNome(), null);
 			//id();
 
 			// Verifica se tem o '(' depois do function
@@ -462,7 +496,15 @@ public class Compiler {
 
 	// func_decl_tail -> func_decl {func_decl_tail}
 	public void func_decl_tail(ArrayList<Function> func){
-		func.add(func_decl());
+		Function temp = func_decl();
+
+		// Salvando a nova função na tabela para analise semantica
+		table.putFunction(temp.getNome(), temp);
+
+		func.add(temp);
+
+		// Limpando a tabela de variaveis locais para a próxima função
+		table.resetLocal();
 
 		if (lexer.token == Symbol.FUNCTION){
 			func_decl_tail(func);
@@ -475,7 +517,8 @@ public class Compiler {
 		ArrayList<Statement> statement = new ArrayList<Statement>();
 
 		//flag de variavel local
-		decl(var, LOCAL);
+		FLAG = LOCAL;
+		decl(var);
 		stmt_list(statement);
 
 		return new FunctionBody(var, statement);
@@ -536,7 +579,8 @@ public class Compiler {
 				}
 				else if (lexer.token == Symbol.ASSIGN){
 					Statement statement = new AssignStatement(new Variable(temp, null, null), null);
-	
+
+					FLAG = ASSIGNWRITE;
 					assign_stmt(statement);		//assign_stmt -> assign_expr ;
 					return statement;			//assign_expr -> id := expr
 				}
@@ -556,6 +600,7 @@ public class Compiler {
 		}
 		else if (lexer.token == Symbol.WRITE){
 			Statement statement = new WriteStatement(null, null, new ArrayList<Variable>());
+			FLAG = ASSIGNWRITE;
 			write_stmt((WriteStatement) statement);
 			return statement;
 		}
@@ -625,7 +670,8 @@ public class Compiler {
 		// 	error.signal("Expected variavel");
 		// }
 
-		id_list(statement.getArrayVar(), tipo, EXISTS);
+		FLAG = EXISTS;
+		id_list(statement.getArrayVar(), tipo);
 
 		if (lexer.token != Symbol.RPAR){
 			error.signal("Expected ')' but found '" + lexer.getStringValue() + "'");
@@ -657,7 +703,8 @@ public class Compiler {
 		// if (lexer.token != Symbol.IDENT)
 		// 	error.signal("Expected variavel");
 		Symbol tipo = Symbol.INT;
-		id_list(statement.getArrayVar(), tipo, EXISTS);
+		FLAG = EXISTS;
+		id_list(statement.getArrayVar(), tipo);
 
 		if (lexer.token != Symbol.RPAR){
 			error.signal("Expected ')' but found '" + lexer.getStringValue() + "'");
@@ -679,6 +726,9 @@ public class Compiler {
 		}
 
 		lexer.nextToken();
+
+		FLAG = RETURN;
+
 		expr(statement.getExpr());
 
 		if (lexer.token != Symbol.SEMICOLON){
@@ -829,6 +879,8 @@ public class Compiler {
 
 	// postfix_expr -> primary | id call_expr
 	public void postfix_expr(CompositeExpr expression){
+
+
 		if (lexer.token == Symbol.LPAR || lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL){
 			primary(expression);
 		}
@@ -838,28 +890,99 @@ public class Compiler {
 			// Procuramos a variavel para ver se está ja foi declarada
 			Variable localVar = (Variable) table.returnLocal(ident);
 			Variable globalVar = (Variable) table.returnGlobal(ident);
-			Variable exist;
+			Variable varExist = null;
+			Function funcExist = null;
 
 			if (localVar != null){
-				exist = localVar;
+				varExist = localVar;
 			}
 			else if (globalVar != null) {
-				exist = globalVar;
+				varExist = globalVar;
 			}
 			else {
-				exist = null;
+				funcExist = (Function) table.returnFunction(ident);
+				CALLFUNC = funcExist;
+				contParamFuncIf = 1;
 			}
 
-			// Se a variavel não tiver sido declarada, lança um erro
-			if (exist == null){
-				error.signal("Error, variable '" + ident + "' has not been declared");
+			// Se a variavel ou função não tiver sido declarada, lança um erro
+			if (varExist == null && funcExist == null){
+				error.signal("Error, variable or function '" + ident + "' has not been declared\nIf it is a function, try to declare and define it before the main function");
 			}
 
-			System.out.println("ATTR " + ATTR.getTipo());
-			System.out.println("exist " + exist.getTipo());
-			// Se o tipo de atribuição for incorreto, lança um erro
-			if (ATTR.getTipo() != exist.getTipo()){
-				error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "' incompatible types");
+			// Se for uma chamada para verificar se a varivel foi delcarada localmente na função
+			if (FLAG == LOCAL){
+				// Se o tipo de atribuição for incorreto, lança um erro
+				if (ATTR.getTipo() != varExist.getTipo()) {
+					error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "', incompatible types");
+				}
+			}
+			else if (FLAG == RETURN) {
+				// Se o tipo de atribuição for incorreto, lança um erro
+				if (FUNC.getTipo() != varExist.getTipo()) {
+					error.signal("Error, function '" + FUNC.getNome() + "' has type '" + FUNC.getTipo() + "'\nAnd variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "', incompatible types");
+				}
+			}
+			else if (FLAG == ASSIGNWRITE){
+				if (funcExist != null){
+					if (ATTR.getTipo() != funcExist.getTipo()){
+						error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd Function '" + funcExist.getNome() + "' has type'" + funcExist.getTipo() + "', incompatible types");
+					}
+				}
+				else{
+					Symbol temp = CALLFUNC.getParametros().get(contParamFuncIf).getTipo();
+					int i = contParamFuncIf + 1;
+
+					if (temp != varExist.getTipo()){
+						error.signal("Error, function '" + CALLFUNC.getNome() + "' parameter in the position [" + i + "] has type '" + temp + "'\nAnd the variable '" + varExist.getVar() + " has type '" + varExist.getTipo() + "', incompatible types");
+					}
+
+					if (ATTR.getTipo() != varExist.getTipo()) {
+						error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "', incompatible types");
+					}
+				}
+			}
+			else if (FLAG == IF){
+				// Se for a primeira variavel da comparação, salvamos na variavel global sue tipo
+				if (FIRSTIF){
+					if (varExist != null){
+						TYPEIF = varExist.getTipo();
+					}
+					else if (funcExist != null) {
+						TYPEIF = funcExist.getTipo();
+						FUNCIF = funcExist;
+					}
+
+					FIRSTIF = false;
+				}
+				else{
+					// Se encontrar uma função no if, salva a função no FUNCIF
+					if (funcExist != null){
+						FUNCIF = funcExist;
+						contParamFuncIf = 1;
+
+						// Verificando se o tipo da função é diferente do tipo comparado no IF
+						if (FUNCIF.getTipo() != TYPEIF){
+							error.signal("Error, function '" + FUNCIF.getNome() + "' has type '" + FUNCIF.getTipo() + "'\nAnd the first type encountered for comparison was '" + TYPEIF + "', incompatible types\nAll variables and functions must have the same type");
+						}
+					}
+					// Se está nos parametros da função
+					else if (FUNCIF != null && varExist != null && !FECHOUPAR){
+						// Se o tipo da variavel passada na chamada da função for errado, lança um erro
+						Symbol temp = FUNCIF.getParametros().get(contParamFuncIf).getTipo();
+						int i = contParamFuncIf + 1;
+
+						if (temp != varExist.getTipo()){
+							error.signal("Error, function '" + FUNCIF.getNome() + "' parameter in the position [" + i + "] has type '" + temp + "'\nAnd the variable '" + varExist.getVar() + " has type '" + varExist.getTipo() + "', incompatible types");
+						}
+					}
+					// Se o tipo da função for diferente da variável de comparação, lança um erro
+					else if (varExist != null && FECHOUPAR) {
+						if (varExist.getTipo() != TYPEIF) {
+							error.signal("Error, variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "'\nAnd the first type encountered for comparison was '" + TYPEIF + "', incompatible types\nAll variables and functions must have the same type");
+						}
+					}
+				}
 			}
 
 			// Se tudo estiver correto, continua normalmente
@@ -923,6 +1046,7 @@ public class Compiler {
 				temp.setDireita(new CompositeExpr(par, null, null));
 			}
 		}
+		FECHOUPAR = false;
 
 		lexer.nextToken();
 
@@ -954,6 +1078,7 @@ public class Compiler {
 				temp.setDireita(new CompositeExpr(par, null, null));
 			}
 		}
+		FECHOUPAR = true;
 
 		lexer.nextToken();
 	}
@@ -1025,6 +1150,7 @@ public class Compiler {
 					expr((CompositeExpr) temp.getDireita());
 				}
 			}
+			FECHOUPAR = false;
 
 			// expr(expression);
 
@@ -1053,6 +1179,8 @@ public class Compiler {
 				}
 			}
 
+			FECHOUPAR = true;
+
 			lexer.nextToken();
 		}
 		else if(lexer.token == Symbol.IDENT){
@@ -1069,8 +1197,15 @@ public class Compiler {
 		}
 		else if(lexer.token == Symbol.INTLITERAL){
 
-			if (ATTR.getTipo() != Symbol.INTLITERAL){
-				error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "' but found 'INT'");
+			if (FLAG == RETURN){
+				if (FUNC.getTipo() != Symbol.INT && FUNC.getTipo() != Symbol.INTLITERAL){
+					error.signal("Error, function '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "' but found 'int'");
+				}
+			}
+			else {
+				if (ATTR.getTipo() != Symbol.INT && ATTR.getTipo() != Symbol.INTLITERAL) {
+					error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "' but found 'int'");
+				}
 			}
 
 			if (expression.getEsquerda() == null){
@@ -1084,6 +1219,18 @@ public class Compiler {
 			lexer.nextToken();
 		}
 		else{
+
+			if (FLAG == RETURN){
+				if (FUNC.getTipo() != Symbol.FLOAT && FUNC.getTipo() != Symbol.FLOATLITERAL){
+					error.signal("Error, function '" + FUNC.getNome() + "' has type '" + FUNC.getTipo() + "' but found 'float'");
+				}
+			}
+			else {
+				if (ATTR.getTipo() != Symbol.FLOAT && ATTR.getTipo() != Symbol.FLOATLITERAL) {
+					error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "' but found 'float'");
+				}
+			}
+
 			if (expression.getEsquerda() == null){
 				expression.setEsquerda(new FloatNumberExpr(lexer.getFloatValue()));
 			}
@@ -1145,7 +1292,14 @@ public class Compiler {
 		}
 
 		lexer.nextToken();
+
+		// Marcando na flag que é uma chamada do IF
+		FLAG = IF;
+		FIRSTIF = true;
 		cond(statement.getExpr());
+
+		// Removendo a referencia a função encontrada no IF
+		FUNCIF = null;
 
 		if (lexer.token != Symbol.RPAR){
 			error.signal("Expected ')' but found '" + lexer.getStringValue() + "'");
@@ -1187,9 +1341,34 @@ public class Compiler {
 	// cond -> expr compop expr
 	public void cond(CompositeExpr expression){
 		expr(expression);
-		compop(expression);
-		expression.setDireita(new CompositeExpr(null, null, null));
-		expr((CompositeExpr) expression.getDireita());
+
+		if (expression.getDireita() == null){
+			compop(expression);
+		}
+		else {
+			CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+			while (temp.getDireita() != null){
+				temp = (CompositeExpr) temp.getDireita();
+			}
+			compop(temp);
+		}
+
+		if (expression.getDireita() == null){
+			expr(expression);
+		}
+		else {
+			CompositeExpr temp = (CompositeExpr) expression.getDireita();
+
+			while (temp.getDireita() != null){
+				temp = (CompositeExpr) temp.getDireita();
+			}
+			expr(temp);
+		}
+
+//		compop(expression);
+//		expression.setDireita(new CompositeExpr(null, null, null));
+//		expr((CompositeExpr) expression.getDireita());
 	}
 
 	// compop -> < | > | =
@@ -1229,6 +1408,7 @@ public class Compiler {
 		// Enquanto for declaração de variáveis no for, verifica as variáveis
 		while (lexer.token == Symbol.IDENT){
 			Variable var = new Variable(id(), Symbol.INT, null);
+			ATTR = var;
 			CompositeExpr ce = assign_expr();
 
 			// Seta o novo Array

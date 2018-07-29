@@ -72,4 +72,12 @@ public class Function{
     public String getNome(){
         return this.nomeFuncao;
     }
+
+    public Symbol getTipo(){
+        return this.tipoRetorno;
+    }
+
+    public ArrayList<Variable> getParametros(){
+        return this.parametros;
+    }
 }

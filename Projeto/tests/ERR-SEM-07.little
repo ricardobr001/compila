@@ -1,14 +1,14 @@
 PROGRAM errsem07
 BEGIN
-  FUNCTION VOID main()
-  BEGIN
-    INT a ;
-    a := addfloats() ;
-  END
+	--RETURN type must match the FUNCTION type
+	FUNCTION INT addfloats ()
+		BEGIN
+		RETURN 2.5 + 1.3 ;
+	END
 
-  --RETURN type must match the FUNCTION type
-  FUNCTION INT addfloats ()
-  BEGIN
-    RETURN 2.5 + 1.3 ;
-  END
+	FUNCTION VOID main()
+	BEGIN
+		INT a ;
+		a := addfloats() ;
+	END	
 END

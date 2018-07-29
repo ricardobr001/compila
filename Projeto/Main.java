@@ -79,22 +79,22 @@ public class Main {
             }
 
             // Cria o arquivo .c para imprimir o código compilado nele
-            FileOutputStream  outputStream;
-            try { 
-               outputStream = new FileOutputStream(outputFileName);
-            } catch ( IOException e ) {
-                System.out.println("File " + args[1] + " was not found or can't be created.");
-                return;
-            }
+            // FileOutputStream  outputStream;
+            // try { 
+            //    outputStream = new FileOutputStream(outputFileName);
+            // } catch ( IOException e ) {
+            //     System.out.println("File " + args[1] + " was not found or can't be created.");
+            //     return;
+            // }
 
-            // Print no arquivo
-            PrintWriter printWriter = new PrintWriter(outputStream, true);
-            PW pw = new PW(printWriter);
-            Compiler compiler = new Compiler();
+            // // Print no arquivo
+            // PrintWriter printWriter = new PrintWriter(outputStream, true);
+            // PW pw = new PW(printWriter);
+            // Compiler compiler = new Compiler();
 
             // Print no terminal
-            // PW pw = new PW(new PrintWriter(System.out, true));
-            // Compiler compiler = new Compiler();
+            PW pw = new PW(new PrintWriter(System.out, true));
+            Compiler compiler = new Compiler();
 
             if (!DEBUG){
                 try {

@@ -1,5 +1,10 @@
 PROGRAM nomedoprograma
 BEGIN
+    FUNCTION INT soma (INT x , INT y)
+    BEGIN
+        RETURN x + y ;
+    END
+    
     FUNCTION VOID main()
     BEGIN
         INT a , b , r ;
@@ -9,10 +14,5 @@ BEGIN
         r := soma ( a , b );
 
         WRITE ( r );
-    END
-
-    FUNCTION INT soma (INT x , INT y)
-    BEGIN
-        RETURN x + y ;
     END
 END

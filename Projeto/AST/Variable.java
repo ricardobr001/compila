@@ -22,6 +22,10 @@ public class Variable {
         this.var = var;
     }
 
+    public void setTipo(Symbol tipo){
+        this.tipo = tipo;
+    }
+
     public void genC(PW pw) {
         if (tipo == Symbol.STRING){
             pw.println("char " + this.var + "[] = " + this.valor + ";");
