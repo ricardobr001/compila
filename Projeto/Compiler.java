@@ -11,7 +11,7 @@ public class Compiler {
 	private SymbolTable table;
 	private int FLAG;
 	private int contParamFuncIf;
-	private int GLOBAL = 0, LOCAL= 1, EXISTS = 2, RETURN = 3, ASSIGNWRITE = 4, IF = 5;
+	private int GLOBAL = 0, LOCAL= 1, EXISTS = 2, RETURN = 3, ASSIGNWRITE = 4, IF = 5, READ = 6;
 	private boolean FIRSTIF, FECHOUPAR;
 	private Symbol TYPEIF;
 	private Function FUNC, FUNCIF, CALLFUNC;
@@ -279,10 +279,36 @@ public class Compiler {
 	// id_list -> id id_tail
 	public void id_list(ArrayList<Variable> var, Symbol tipo){
 
-		Variable nova = new Variable(id(), tipo, null);
+		if (FLAG == READ){
+			String ident = id();
 
+			// Procuramos a variavel para ver se está ja foi declarada
+			Variable localVar = (Variable) table.returnLocal(ident);
+			Variable globalVar = (Variable) table.returnGlobal(ident);
+			Variable varExist = null;
+
+			if (localVar != null){
+				varExist = localVar;
+			}
+			else if (globalVar != null) {
+				varExist = globalVar;
+			}
+
+			if (varExist != null){
+				if (varExist.getTipo() == Symbol.STRING){
+					error.signal("Error, variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "'\nStrings are constants, should not be used in the READ");
+				}
+			}
+			else{
+				error.signal("Error, variable '" + ident + "' has not been declared");
+			}
+
+			var.add(varExist);
+		}
 		// Se a chamada for na declaração da variável
-		if (FLAG != EXISTS){
+		else if (FLAG != EXISTS){
+			Variable nova = new Variable(id(), tipo, null);
+
 			// Análise semântica, verificamos se essa variavél ja foi declarada anteriormente
 			// Verificando se ela existe na tabela de variáveis globais
 			if (table.returnGlobal(nova.getVar()) != null){
@@ -305,16 +331,26 @@ public class Compiler {
 
 			var.add(nova);
 		}
-		// Se a chamada for na verificação, ou seja, ver se a variável ja foi declarada
-		else {
-			Variable exist = (Variable) table.returnLocal(nova.getVar());
+		else{
+			String ident = id();
 
-			//System.out.println("Oi\n\n" + teste.getVar() + "\n" + teste.getValor() + "\n" + teste.getTipo());
-			if (table.returnLocal(nova.getVar()) == null && table.returnGlobal(nova.getVar()) == null){
-				error.signal("Error, variable '" + nova.getVar() + "' has not been declared");
+			// Procuramos a variavel para ver se está ja foi declarada
+			Variable localVar = (Variable) table.returnLocal(ident);
+			Variable globalVar = (Variable) table.returnGlobal(ident);
+			Variable varExist = null;
+
+			if (localVar != null){
+				varExist = localVar;
+			}
+			else if (globalVar != null) {
+				varExist = globalVar;
+			}
+
+			if (varExist == null){
+				error.signal("Error, variable '" + ident + "' has not been declared");
 			}
 			
-			var.add(exist);
+			var.add(varExist);
 		}
 
 		id_tail(var, tipo);
@@ -328,7 +364,31 @@ public class Compiler {
 
 			Variable nova = new Variable(id(), tipo, null);
 
-			if (FLAG != EXISTS){
+			if (FLAG == READ){
+				// Procuramos a variavel para ver se está ja foi declarada
+				Variable localVar = (Variable) table.returnLocal(nova.getVar());
+				Variable globalVar = (Variable) table.returnGlobal(nova.getVar());
+				Variable varExist = null;
+
+				if (localVar != null){
+					varExist = localVar;
+				}
+				else if (globalVar != null) {
+					varExist = globalVar;
+				}
+
+				if (varExist != null){
+					if (varExist.getTipo() == Symbol.STRING){
+						error.signal("Error, variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "'\nStrings are constants, should not be used in the READ");
+					}
+				}
+				else{
+					error.signal("Error, variable '" + nova.getVar() + "' has not been declared");
+				}
+
+				var.add(varExist);
+			}
+			else if (FLAG != EXISTS){
 				// Análise semântica, verificamos se essa variavél ja foi declarada anteriormente
 				// Verificando se ela existe na tabela de variáveis globais
 				if (table.returnGlobal(nova.getVar()) != null){
@@ -674,7 +734,7 @@ public class Compiler {
 		// 	error.signal("Expected variavel");
 		// }
 
-		FLAG = EXISTS;
+		FLAG = READ;
 		id_list(statement.getArrayVar(), tipo);
 
 		if (lexer.token != Symbol.RPAR){
