@@ -552,21 +552,22 @@ public class Compiler {
 			// Procuramos a variavel para ver se está ja foi declarada
 			Variable localVar = (Variable) table.returnLocal(temp);
 			Variable globalVar = (Variable) table.returnGlobal(temp);
-			Variable exist;
+			Variable varExist = null;
+			Function funcExist = null;
 
 			if (localVar != null){
-				exist = localVar;
+				varExist = localVar;
 			}
 			else if (globalVar != null) {
-				exist = globalVar;
+				varExist = globalVar;
 			}
 			else {
-				exist = null;
+				funcExist = (Function) table.returnFunction(temp);
 			}
 
 			// Verificamos se a variavel foi encontrada
-			if (exist != null){
-				ATTR = exist;
+			if (varExist != null){
+				ATTR = varExist;
 				if (lexer.token == Symbol.LPAR){
 					CompositeExpr expression = new CompositeExpr(null, null, null);
 					call_expr(expression);	//call_expr -> id ( {expr_list} )
@@ -589,6 +590,9 @@ public class Compiler {
 				}
 			}
 			// Caso não seja encontrado, avisamos que a variavel nao foi declarada
+			else if (funcExist != null){
+				error.signal("Error, functions can only be used in ASSIGNMENTS, IF conditions and FOR definitions\nTried to use the function '" + funcExist.getNome() + "'");
+			}
 			else{
 				error.signal("Error, variable '" + temp + "' has not been declared");
 			}
@@ -910,12 +914,26 @@ public class Compiler {
 				error.signal("Error, variable or function '" + ident + "' has not been declared\nIf it is a function, try to declare and define it before the main function");
 			}
 
-			// Se for uma chamada para verificar se a varivel foi delcarada localmente na função
-			if (FLAG == LOCAL){
+			// Se for uma chamada para verificar se a varivel foi declarada localmente na função e não é chamada de função na atribuição
+			if (FLAG == LOCAL && CALLFUNC == null){
 				// Se o tipo de atribuição for incorreto, lança um erro
 				if (ATTR.getTipo() != varExist.getTipo()) {
 					error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "', incompatible types");
 				}
+			}
+			// Se for uma chamada para verificar se a variavel foi declarada localmente na função e é uma chamada de função para atribuição
+			else if (FLAG == LOCAL && CALLFUNC != null && FECHOUPAR){
+				Symbol temp = CALLFUNC.getParametros().get(contParamFuncIf).getTipo();
+				int i = contParamFuncIf + 1;
+
+				if (temp != varExist.getTipo()){
+					error.signal("Error, function '" + CALLFUNC.getNome() + "' parameter in the position [" + i + "] has type '" + temp + "'\nAnd the variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "', incompatible types");
+				}
+
+				if (ATTR.getTipo() != varExist.getTipo()) {
+					error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "', incompatible types");
+				}
+
 			}
 			else if (FLAG == RETURN) {
 				// Se o tipo de atribuição for incorreto, lança um erro
@@ -934,7 +952,7 @@ public class Compiler {
 					int i = contParamFuncIf + 1;
 
 					if (temp != varExist.getTipo()){
-						error.signal("Error, function '" + CALLFUNC.getNome() + "' parameter in the position [" + i + "] has type '" + temp + "'\nAnd the variable '" + varExist.getVar() + " has type '" + varExist.getTipo() + "', incompatible types");
+						error.signal("Error, function '" + CALLFUNC.getNome() + "' parameter in the position [" + i + "] has type '" + temp + "'\nAnd the variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "', incompatible types");
 					}
 
 					if (ATTR.getTipo() != varExist.getTipo()) {
