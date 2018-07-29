@@ -944,7 +944,12 @@ public class Compiler {
 			else if (FLAG == ASSIGNWRITE){
 				if (funcExist != null){
 					if (ATTR.getTipo() != funcExist.getTipo()){
-						error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd Function '" + funcExist.getNome() + "' has type'" + funcExist.getTipo() + "', incompatible types");
+						error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd function '" + funcExist.getNome() + "' has type '" + funcExist.getTipo() + "', incompatible types");
+					}
+				}
+				else if (varExist != null && CALLFUNC == null){
+					if (ATTR.getTipo() != varExist.getTipo()){
+						error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "', incompatible types");
 					}
 				}
 				else{
@@ -1097,6 +1102,7 @@ public class Compiler {
 			}
 		}
 		FECHOUPAR = true;
+		CALLFUNC = null;
 
 		lexer.nextToken();
 	}
@@ -1198,6 +1204,7 @@ public class Compiler {
 			}
 
 			FECHOUPAR = true;
+			CALLFUNC = null;
 
 			lexer.nextToken();
 		}
