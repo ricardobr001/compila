@@ -906,7 +906,7 @@ public class Compiler {
 			else {
 				funcExist = (Function) table.returnFunction(ident);
 				CALLFUNC = funcExist;
-				contParamFuncIf = 1;
+				contParamFuncIf = 0;
 			}
 
 			// Se a variavel ou função não tiver sido declarada, lança um erro
@@ -925,6 +925,7 @@ public class Compiler {
 			else if (FLAG == LOCAL && CALLFUNC != null && FECHOUPAR){
 				Symbol temp = CALLFUNC.getParametros().get(contParamFuncIf).getTipo();
 				int i = contParamFuncIf + 1;
+				contParamFuncIf++;
 
 				if (temp != varExist.getTipo()){
 					error.signal("Error, function '" + CALLFUNC.getNome() + "' parameter in the position [" + i + "] has type '" + temp + "'\nAnd the variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "', incompatible types");
@@ -942,7 +943,7 @@ public class Compiler {
 				}
 			}
 			else if (FLAG == ASSIGNWRITE){
-				if (funcExist != null){
+				if (funcExist != null && !FECHOUPAR){
 					if (ATTR.getTipo() != funcExist.getTipo()){
 						error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd function '" + funcExist.getNome() + "' has type '" + funcExist.getTipo() + "', incompatible types");
 					}
@@ -952,14 +953,27 @@ public class Compiler {
 						error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "', incompatible types");
 					}
 				}
-				else{
+				else if (varExist != null && !FECHOUPAR){
+					// Se encontrar que a está chamando a função com mais parametros do que deveria
+					if (CALLFUNC.getParametros().size() < contParamFuncIf + 1){
+						int i = contParamFuncIf + 1;
+						error.signal("Error, function ' "+ CALLFUNC.getNome() + "' has [" + CALLFUNC.getParametros().size() + "] parameters\nAnd found [" + i + "] parameters");
+					}
+
+					// Se o tipo da variavel passada na chamada da função for errado, lança um erro
 					Symbol temp = CALLFUNC.getParametros().get(contParamFuncIf).getTipo();
 					int i = contParamFuncIf + 1;
+					contParamFuncIf++;
 
 					if (temp != varExist.getTipo()){
 						error.signal("Error, function '" + CALLFUNC.getNome() + "' parameter in the position [" + i + "] has type '" + temp + "'\nAnd the variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "', incompatible types");
 					}
 
+//					if (ATTR.getTipo() != varExist.getTipo()) {
+//						error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "', incompatible types");
+//					}
+				}
+				else {
 					if (ATTR.getTipo() != varExist.getTipo()) {
 						error.signal("Error, variable '" + ATTR.getVar() + "' has type '" + ATTR.getTipo() + "'\nAnd variable '" + varExist.getVar() + "' has type '" + varExist.getTipo() + "', incompatible types");
 					}
@@ -982,7 +996,7 @@ public class Compiler {
 					// Se encontrar uma função no if, salva a função no FUNCIF
 					if (funcExist != null){
 						FUNCIF = funcExist;
-						contParamFuncIf = 1;
+						contParamFuncIf = 0;
 
 						// Verificando se o tipo da função é diferente do tipo comparado no IF
 						if (FUNCIF.getTipo() != TYPEIF){
@@ -991,9 +1005,16 @@ public class Compiler {
 					}
 					// Se está nos parametros da função
 					else if (FUNCIF != null && varExist != null && !FECHOUPAR){
+						// Se encontrar que a está chamando a função com mais parametros do que deveria
+						if (FUNCIF.getParametros().size() < contParamFuncIf + 1){
+							int i = contParamFuncIf + 1;
+							error.signal("Error, function ' "+ FUNCIF.getNome() + "' has [" + FUNCIF.getParametros().size() + "] parameters\nAnd found [" + i + "] parameters");
+						}
+
 						// Se o tipo da variavel passada na chamada da função for errado, lança um erro
 						Symbol temp = FUNCIF.getParametros().get(contParamFuncIf).getTipo();
 						int i = contParamFuncIf + 1;
+						contParamFuncIf++;
 
 						if (temp != varExist.getTipo()){
 							error.signal("Error, function '" + FUNCIF.getNome() + "' parameter in the position [" + i + "] has type '" + temp + "'\nAnd the variable '" + varExist.getVar() + " has type '" + varExist.getTipo() + "', incompatible types");
@@ -1432,7 +1453,31 @@ public class Compiler {
 
 		// Enquanto for declaração de variáveis no for, verifica as variáveis
 		while (lexer.token == Symbol.IDENT){
-			Variable var = new Variable(id(), Symbol.INT, null);
+			String ident = id();
+
+			// Procuramos a variavel para ver se está ja foi declarada
+			Variable localVar = (Variable) table.returnLocal(ident);
+			Variable globalVar = (Variable) table.returnGlobal(ident);
+			Variable varExist = null;
+
+			// System.out.println("IDENT: " + ident);
+			// System.out.println("LOCAL: " + localVar);
+			// System.out.println("GLOBAL: " + globalVar);
+			if (localVar != null){
+				varExist = localVar;
+			}
+			else if (globalVar != null) {
+				varExist = globalVar;
+			}
+
+			// Se a variavel não tiver sido declarada
+			if (varExist == null){
+				error.signal("Error, variable '" + ident + "' has not been declared");
+			}
+
+			// Se a variavel foi declarada, continua normalmente
+			Symbol tempType = varExist.getTipo();
+			Variable var = new Variable(ident, tempType, null);
 			ATTR = var;
 			CompositeExpr ce = assign_expr();
 
@@ -1451,7 +1496,13 @@ public class Compiler {
 
 		// Enquanto for um IDENT ou '(' ou ')' ou float ou int, chama o cond()
 		while (lexer.token == Symbol.LPAR || lexer.token == Symbol.INTLITERAL || lexer.token == Symbol.FLOATLITERAL || lexer.token == Symbol.IDENT){
+			// Marcando na flag que é uma chamada do IF (condição)
+			FLAG = IF;
+			FIRSTIF = true;
 			cond(statement.getExpr());
+
+			// Removendo a referencia a função encontrada no IF
+			FUNCIF = null;
 		}
 
 		if (lexer.token != Symbol.SEMICOLON){
@@ -1462,7 +1513,32 @@ public class Compiler {
 
 		// Enquanto for um IDENT, chama o id() e assign_expr()
 		while(lexer.token == Symbol.IDENT){
-			Variable var = new Variable(id(), Symbol.INT, null);
+			String ident = id();
+
+			Variable localVar = (Variable) table.returnLocal(ident);
+			Variable globalVar = (Variable) table.returnGlobal(ident);
+			Variable varExist = null;
+
+			// System.out.println("IDENT: " + ident);
+			// System.out.println("LOCAL: " + localVar);
+			// System.out.println("GLOBAL: " + globalVar);
+			if (localVar != null){
+				varExist = localVar;
+			}
+			else if (globalVar != null) {
+				varExist = globalVar;
+			}
+
+			// Se a variavel não tiver sido declarada
+			if (varExist == null){
+				error.signal("Error, variable '" + ident + "' has not been declared");
+			}
+
+			// Se a variavel foi declarada, continua normalmente
+			Symbol tempType = varExist.getTipo();			
+			Variable var = new Variable(ident, tempType, null);
+			ATTR = var;
+			FLAG = ASSIGNWRITE;
 			CompositeExpr ce = assign_expr();
 			// id();
 			// assign_expr();

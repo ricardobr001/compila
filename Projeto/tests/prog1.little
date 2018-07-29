@@ -1,3 +1,6 @@
 PROGRAM nomedoprograma
 BEGIN
+    FUNCTION VOID main()
+    BEGIN
+    END
 END
